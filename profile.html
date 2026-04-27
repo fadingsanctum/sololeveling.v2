@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hunter Profile — SYSTEM</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/png" href="favicon.jpg">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cyan: #00f5ff; --blue: #0066ff; --purple: #7b00ff;
+      --dark: #00060f; --darker: #000308;
+      --panel: rgba(0,8,22,0.9); --border: rgba(0,245,255,0.3);
+      --glow: 0 0 25px rgba(0,245,255,0.4);
+      --red: #ff4444; --green: #00ff88; --gold: #ffd700;
+    }
+
+    body {
+      min-height: 100vh; min-height: 100dvh;
+      padding: clamp(70px,12vw,90px) clamp(12px,4vw,20px) clamp(50px,8vw,70px);
+      position: relative;
+    }
+
+    /* Ambient orbs */
+    .orb { position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0;opacity:0.08; }
+    .orb-1 { width:min(500px,70vw);height:min(500px,70vw);background:#0044cc;top:-150px;left:-150px;animation:orbF1 10s ease-in-out infinite; }
+    .orb-2 { width:min(350px,55vw);height:min(350px,55vw);background:#5500aa;bottom:-100px;right:-100px;animation:orbF2 12s ease-in-out infinite; }
+    @keyframes orbF1{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,20px)}}
+    @keyframes orbF2{0%,100%{transform:translate(0,0)}50%{transform:translate(-20px,-30px)}}
+
+    /* Back button */
+    #backBtn {
+      position: fixed;
+      top: clamp(10px, 2vw, 18px);
+      left: clamp(10px, 2vw, 18px);
+      padding: clamp(7px,1.5vw,10px) clamp(12px,2.5vw,18px);
+      background: rgba(0,0,0,0.8);
+      border: 1px solid rgba(0,245,255,0.4);
+      color: var(--cyan);
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(10px,2.5vw,12px);
+      cursor: pointer;
+      text-shadow: 0 0 8px rgba(0,245,255,0.6);
+      transition: all 0.3s;
+      z-index: 9999;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+      min-width: 44px;
+      justify-content: center;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+      letter-spacing: 2px;
+    }
+
+    #backBtn:hover {
+      background: rgba(0,245,255,0.12);
+      border-color: var(--cyan);
+      box-shadow: var(--glow);
+    }
+
+    /* Main container */
+    .container {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+      padding: clamp(18px,4vw,28px);
+      background: var(--panel);
+      border: 1px solid var(--border);
+      box-shadow: var(--glow), inset 0 0 50px rgba(0,245,255,0.02);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+      position: relative;
+      z-index: 10;
+      animation: fadeUp 0.6s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Corner pieces */
+    .c{position:absolute;width:28px;height:28px;border-color:rgba(0,245,255,0.7);border-style:solid;}
+    .c-tl{top:-1px;left:-1px;border-width:2px 0 0 2px;}
+    .c-tr{top:-1px;right:-1px;border-width:2px 2px 0 0;}
+    .c-bl{bottom:-1px;left:-1px;border-width:0 0 2px 2px;}
+    .c-br{bottom:-1px;right:-1px;border-width:0 2px 2px 0;}
+
+    h1 {
+      text-align: center;
+      margin-bottom: clamp(14px,3vw,22px);
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(15px,4vw,20px);
+      font-weight: 900;
+      letter-spacing: clamp(2px,0.5vw,5px);
+      background: linear-gradient(135deg, #fff 0%, var(--cyan) 40%, var(--blue) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Avatar */
+    .avatar-wrap {
+      position: relative;
+      width: clamp(80px,18vw,110px);
+      height: clamp(80px,18vw,110px);
+      margin: 0 auto clamp(16px,3vw,22px);
+    }
+
+    .avatar-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      background: linear-gradient(135deg, var(--cyan), var(--blue), var(--purple)) border-box;
+      -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: destination-out;
+      mask-composite: exclude;
+      animation: ringRotate 4s linear infinite;
+    }
+
+    @keyframes ringRotate { to { transform: rotate(360deg); } }
+
+    .avatar-preview {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      border: 2px solid rgba(0,245,255,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(30px,8vw,44px);
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      background: linear-gradient(135deg, rgba(0,30,80,0.8), rgba(40,0,100,0.8));
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 0 20px rgba(0,245,255,0.25), inset 0 0 20px rgba(0,0,40,0.5);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Rank badge below avatar */
+    .rank-badge {
+      text-align: center;
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(9px,2vw,11px);
+      letter-spacing: 3px;
+      margin-bottom: 20px;
+      color: rgba(0,245,255,0.6);
+    }
+
+    label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(10px,2.5vw,11px);
+      letter-spacing: 2px;
+      color: rgba(0,245,255,0.5);
+      display: block;
+      margin-top: clamp(10px,2.5vw,14px);
+      margin-bottom: 5px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: clamp(10px,2.5vw,12px) 14px;
+      background: rgba(0,245,255,0.02);
+      color: var(--cyan);
+      border: 1px solid rgba(0,245,255,0.2);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(13px,3vw,14px);
+      outline: none;
+      transition: all 0.25s;
+      min-height: 46px;
+      border-radius: 0;
+      -webkit-appearance: none;
+      clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+    }
+
+    input[type="text"]:focus {
+      border-color: rgba(0,245,255,0.7);
+      background: rgba(0,245,255,0.05);
+      box-shadow: 0 0 15px rgba(0,245,255,0.15);
+    }
+
+    /* Drop zone */
+    #dropZone {
+      border: 2px dashed rgba(0,245,255,0.3);
+      padding: clamp(16px,3vw,22px);
+      text-align: center;
+      cursor: pointer;
+      margin: 10px 0 16px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(10px,2.5vw,12px);
+      letter-spacing: 1px;
+      color: rgba(0,245,255,0.4);
+      transition: all 0.25s;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    #dropZone:hover, #dropZone.dragover {
+      border-color: var(--cyan);
+      background: rgba(0,245,255,0.04);
+      color: var(--cyan);
+    }
+
+    #dropZone .drop-icon { font-size: 24px; }
+
+    /* Save button */
+    .btn-save {
+      width: 100%;
+      padding: clamp(12px,3vw,15px);
+      margin-top: 18px;
+      background: linear-gradient(135deg, rgba(0,245,255,0.08), rgba(0,102,255,0.08));
+      border: 1px solid rgba(0,245,255,0.6);
+      color: var(--cyan);
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(11px,2.5vw,13px);
+      font-weight: 700;
+      letter-spacing: 3px;
+      cursor: pointer;
+      transition: all 0.3s;
+      min-height: 50px;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-save::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0,245,255,0.12), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn-save:hover {
+      background: linear-gradient(135deg, rgba(0,245,255,0.15), rgba(0,102,255,0.15));
+      box-shadow: var(--glow);
+    }
+
+    .btn-save:hover::before { left: 100%; }
+
+    /* Delete button */
+    .btn-delete {
+      width: 100%;
+      max-width: 520px;
+      margin: clamp(16px,3vw,22px) auto 0;
+      display: block;
+      padding: clamp(9px,2vw,12px) 18px;
+      background: transparent;
+      border: 1px solid rgba(255,68,68,0.4);
+      color: rgba(255,68,68,0.7);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(10px,2.5vw,12px);
+      cursor: pointer;
+      letter-spacing: 2px;
+      transition: all 0.3s;
+      min-height: 44px;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    }
+
+    .btn-delete:hover {
+      background: rgba(255,68,68,0.08);
+      border-color: #ff4444;
+      color: #ff4444;
+      box-shadow: 0 0 20px rgba(255,68,68,0.3);
+    }
+
+    /* Stats preview */
+    .stats-preview {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .stat-chip {
+      background: rgba(0,245,255,0.04);
+      border: 1px solid rgba(0,245,255,0.12);
+      padding: 8px;
+      text-align: center;
+    }
+
+    .stat-chip-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 8px;
+      letter-spacing: 1px;
+      color: rgba(0,245,255,0.4);
+      margin-bottom: 3px;
+    }
+
+    .stat-chip-value {
+      font-family: 'Orbitron', monospace;
+      font-size: clamp(13px,3vw,16px);
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: clamp(10px,3vw,18px);
+      right: clamp(10px,3vw,18px);
+      padding: clamp(10px,2.5vw,14px) clamp(14px,3vw,20px);
+      background: rgba(0,6,20,0.96);
+      border-left: 3px solid var(--cyan);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: clamp(10px,2.5vw,12px);
+      letter-spacing: 1px;
+      box-shadow: var(--glow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 10000;
+      max-width: min(320px, calc(100vw - 24px));
+      animation: slideIn 0.4s ease, fadeOut 0.4s ease 3.6s forwards;
+      word-break: break-word;
+    }
+
+    .toast.success { border-color: #00ff88; color: #00ff88; }
+    .toast.error   { border-color: #ff4444; color: #ff4444; }
+
+    @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:translateX(0);opacity:1} }
+    @keyframes fadeOut { to{opacity:0;transform:translateX(100%)} }
+
+    /* Responsive */
+    @media(min-width:769px) and (max-width:1024px){ .container{max-width:540px;} }
+    @media(min-width:1400px){ .container{max-width:570px;padding:32px;} }
+    @media(min-width:1920px){ .container{max-width:600px;padding:40px;} }
+    @media(max-width:380px){ .container{padding:14px;} }
+    @media(max-height:500px) and (orientation:landscape){ body{padding-top:55px;} }
+  </style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<a href="system.html" id="backBtn">‹ BACK</a>
+
+<div class="container">
+  <div class="c c-tl"></div>
+  <div class="c c-tr"></div>
+  <div class="c c-bl"></div>
+  <div class="c c-br"></div>
+
+  <h1>HUNTER PROFILE</h1>
+
+  <div class="avatar-wrap">
+    <div class="avatar-ring"></div>
+    <div class="avatar-preview" id="avatarPreview"></div>
+  </div>
+
+  <div class="rank-badge" id="rankBadge">RANK — · LEVEL —</div>
+
+  <label>DISPLAY NAME</label>
+  <input type="text" id="displayNameInput" autocomplete="name" placeholder="Your hunter name">
+
+  <label>NICKNAME (PUBLIC NAME)</label>
+  <input type="text" id="nicknameInput" placeholder="Optional public nickname">
+
+  <label>PROFILE PICTURE</label>
+  <div id="dropZone">
+    <div class="drop-icon">📸</div>
+    <span>DRAG & DROP IMAGE OR CLICK TO UPLOAD</span>
+    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+  </div>
+
+  <!-- Stats Preview -->
+  <label>CURRENT STATS</label>
+  <div class="stats-preview" id="statsPreview">
+    <div class="stat-chip"><div class="stat-chip-label">STR</div><div class="stat-chip-value" id="s-str">—</div></div>
+    <div class="stat-chip"><div class="stat-chip-label">AGI</div><div class="stat-chip-value" id="s-agi">—</div></div>
+    <div class="stat-chip"><div class="stat-chip-label">INT</div><div class="stat-chip-value" id="s-int">—</div></div>
+    <div class="stat-chip"><div class="stat-chip-label">VIT</div><div class="stat-chip-value" id="s-vit">—</div></div>
+    <div class="stat-chip"><div class="stat-chip-label">PER</div><div class="stat-chip-value" id="s-per">—</div></div>
+    <div class="stat-chip"><div class="stat-chip-label">LCK</div><div class="stat-chip-value" id="s-lck">—</div></div>
+  </div>
+
+  <button class="btn-save" onclick="saveProfile()">⬡ SAVE PROFILE</button>
+</div>
+
+<button class="btn-delete" id="deleteAccountBtn">☠ DELETE ACCOUNT</button>
+
+<div id="systemFooter">
+  &copy; 2026 SOLO LEVELING — AMEEN
+  <span>Secure Connection Active</span>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, updateProfile, deleteUser,
+  EmailAuthProvider, reauthenticateWithCredential
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, setDoc, getDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAPP2o5T7jl-9LGpVRKJripfMvdpuEEK50",
+  authDomain: "soulkart-a8200.firebaseapp.com",
+  projectId: "soulkart-a8200",
+  storageBucket: "soulkart-a8200.firebasestorage.app",
+  messagingSenderId: "715711006853",
+  appId: "1:715711006853:web:b0765bca24dd583426c1ec"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+let currentUser = null;
+
+function showToast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href = 'login.html'; return; }
+  currentUser = user;
+  document.getElementById('displayNameInput').value = user.displayName || '';
+
+  const preview = document.getElementById('avatarPreview');
+
+  try {
+    const ref  = doc(db, 'users', user.uid);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      document.getElementById('nicknameInput').value = data.nickname || '';
+
+      // Load profile picture from Firestore
+      if (data.photoBase64) {
+        preview.style.backgroundImage = `url(${data.photoBase64})`;
+        preview.textContent = '';
+        preview.style.backgroundSize = 'cover';
+        preview.style.backgroundPosition = 'center';
+        // Keep localStorage in sync for other pages
+        try { localStorage.setItem('profilePic', data.photoBase64); } catch(_) {}
+      } else {
+        preview.textContent = (user.displayName || 'S')[0].toUpperCase();
+      }
+
+      // Rank badge
+      document.getElementById('rankBadge').textContent =
+        `RANK ${data.rank || 'E'} · LEVEL ${data.level || 1} · ${(data.title || 'Ordinary Human').toUpperCase()}`;
+      // Stats
+      const stats = data.stats || {};
+      if (document.getElementById('s-str')) document.getElementById('s-str').textContent = stats.strength     || 10;
+      if (document.getElementById('s-agi')) document.getElementById('s-agi').textContent = stats.agility      || 10;
+      if (document.getElementById('s-int')) document.getElementById('s-int').textContent = stats.intelligence || 10;
+      if (document.getElementById('s-vit')) document.getElementById('s-vit').textContent = stats.vitality     || 10;
+      if (document.getElementById('s-per')) document.getElementById('s-per').textContent = stats.perception   || 10;
+      if (document.getElementById('s-lck')) document.getElementById('s-lck').textContent = stats.luck         || 5;
+    } else {
+      preview.textContent = (user.displayName || 'S')[0].toUpperCase();
+    }
+  } catch (e) {
+    console.warn('Could not load profile:', e);
+    preview.textContent = (user.displayName || 'S')[0].toUpperCase();
+  }
+});
+
+window.saveProfile = async function() {
+  const displayName = document.getElementById('displayNameInput').value.trim();
+  const nickname    = document.getElementById('nicknameInput').value.trim();
+  if (!currentUser) { showToast('User not ready', 'error'); return; }
+  if (!displayName)  { showToast('Display name cannot be empty', 'error'); return; }
+
+  try {
+    await updateProfile(currentUser, { displayName });
+    const updateData = { name: displayName, nickname };
+    // Save photo to Firestore if one is pending
+    if (window._pendingPhotoBase64) {
+      updateData.photoBase64 = window._pendingPhotoBase64;
+    }
+    await setDoc(doc(db, 'users', currentUser.uid), updateData, { merge: true });
+    window._pendingPhotoBase64 = null;
+    showToast('⬡ Hunter Profile Updated!', 'success');
+  } catch (err) {
+    console.error(err);
+    showToast('Error saving profile', 'error');
+  }
+};
+
+document.getElementById('deleteAccountBtn').addEventListener('click', async () => {
+  const ok = confirm('Are you sure?\n\nThis will permanently delete your account and ALL data. This cannot be undone.');
+  if (!ok) return;
+
+  try {
+    const user = auth.currentUser;
+    if (!user) { showToast('User not found.', 'error'); return; }
+
+    const password = prompt('Enter your password to confirm deletion:');
+    if (!password) return;
+
+    const credential = EmailAuthProvider.credential(user.email, password);
+    await reauthenticateWithCredential(user, credential);
+    await deleteDoc(doc(db, 'users', user.uid));
+    localStorage.removeItem('profilePic');
+    window._pendingPhotoBase64 = null;
+    await deleteUser(user);
+    window.location.href = 'login.html';
+  } catch (err) {
+    console.error('DELETE ERROR:', err);
+    const msgs = {
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/requires-recent-login': 'Please log out and log back in first.',
+    };
+    showToast(msgs[err.code] || 'Delete failed. Check console.', 'error');
+  }
+});
+
+// ── File upload with compression ──
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) handleImage(e.target.files[0]);
+});
+
+dropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+dropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files[0]) handleImage(e.dataTransfer.files[0]);
+});
+
+function handleImage(file) {
+  if (!file || !file.type.startsWith('image/')) {
+    showToast('Please upload a valid image file.', 'error');
+    return;
+  }
+
+  const img    = new Image();
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const maxDim = 300;
+      let w = img.width, h = img.height;
+
+      if (w > maxDim || h > maxDim) {
+        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
+        else       { w = Math.round(w * maxDim / h); h = maxDim; }
+      }
+
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.72);
+
+      // Hold in memory — written to Firestore when user clicks SAVE PROFILE
+      window._pendingPhotoBase64 = compressed;
+
+      const preview = document.getElementById('avatarPreview');
+      preview.style.backgroundImage = `url(${compressed})`;
+      preview.textContent = '';
+      preview.style.backgroundSize = 'cover';
+      preview.style.backgroundPosition = 'center';
+      showToast('⬡ Image ready — hit SAVE PROFILE to commit', 'success');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+</body>
+</html>

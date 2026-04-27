@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="favicon.jpg">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>ARCHITECT SYSTEM — Hunter Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan: #00f5ff;
+  --blue: #0066ff;
+  --purple: #7b00ff;
+  --gold: #ffd700;
+  --green: #00ff88;
+  --red: #ff4444;
+  --orange: #ff8800;
+  --dark: #00060f;
+  --darker: #000308;
+  --panel: rgba(0,12,30,0.88);
+  --border: rgba(0,245,255,0.22);
+  --glow: 0 0 20px rgba(0,245,255,0.35);
+  --glow-gold: 0 0 20px rgba(255,215,0,0.5);
+  --sidebar-w: 220px;
+  --topbar-h: 60px;
+}
+
+/* ── SCANLINES & GRID ── */
+body::after {
+  content:'';position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+  pointer-events:none;z-index:9998;
+}
+body::before {
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,245,255,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(0,245,255,0.018) 1px,transparent 1px);
+  background-size:60px 60px;pointer-events:none;z-index:0;
+}
+
+/* ── NOTIFICATION ── */
+#notification {
+  position:fixed;top:calc(var(--topbar-h)+10px);right:clamp(10px,3vw,20px);
+  z-index:10000;display:flex;flex-direction:column;gap:8px;
+  max-width:min(340px,calc(100vw - 20px));pointer-events:none;
+}
+.notif {
+  padding:12px 18px;background:rgba(0,8,24,0.97);
+  border-left:3px solid var(--cyan);
+  font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,12px);
+  letter-spacing:1px;box-shadow:var(--glow);
+  animation:slideIn 0.35s ease, fadeOut 0.4s ease 3.6s forwards;
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+}
+.notif.gold{border-color:var(--gold);box-shadow:var(--glow-gold);color:var(--gold);}
+.notif.green{border-color:var(--green);box-shadow:0 0 20px rgba(0,255,136,0.35);color:var(--green);}
+.notif.red{border-color:var(--red);color:var(--red);}
+
+@keyframes slideIn{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes fadeOut{to{opacity:0;transform:translateX(110%)}}
+
+/* ── SYSTEM ALERT OVERLAY ── */
+#systemAlertOverlay {
+  position:fixed;inset:0;z-index:9997;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.94);padding:20px;
+  backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+}
+#systemAlertOverlay.show{display:flex;animation:alertIn 0.5s ease;}
+@keyframes alertIn{from{opacity:0}to{opacity:1}}
+
+.alert-frame {
+  border:1px solid rgba(0,245,255,0.4);
+  padding:clamp(24px,5vw,48px) clamp(20px,6vw,60px);
+  text-align:center;max-width:520px;width:100%;
+  clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px));
+  background:rgba(0,8,24,0.98);box-shadow:0 0 60px rgba(0,245,255,0.2);
+  position:relative;
+}
+.alert-frame::before {
+  content:'';position:absolute;inset:-1px;
+  background:linear-gradient(135deg,rgba(0,245,255,0.4),transparent,rgba(0,102,255,0.3),transparent);
+  pointer-events:none;z-index:-1;
+}
+.alert-system-id {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(8px,2vw,10px);
+  color:rgba(0,245,255,0.4);letter-spacing:4px;margin-bottom:16px;
+  animation:blink 2.5s step-end infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+.alert-title {
+  font-family:'Orbitron',monospace;font-size:clamp(22px,6vw,42px);font-weight:900;
+  letter-spacing:clamp(2px,1vw,6px);
+  background:linear-gradient(135deg,#fff 0%,var(--cyan) 40%,var(--blue) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  filter:drop-shadow(0 0 20px rgba(0,245,255,0.5));margin-bottom:6px;
+  animation:textPulse 3s ease infinite;
+}
+@keyframes textPulse{0%,100%{filter:drop-shadow(0 0 20px rgba(0,245,255,0.5))}50%{filter:drop-shadow(0 0 40px rgba(0,245,255,0.9))}}
+
+.alert-sub {
+  font-family:'Orbitron',monospace;font-size:clamp(8px,2vw,11px);
+  letter-spacing:clamp(2px,0.8vw,5px);color:rgba(0,245,255,0.45);
+  text-transform:uppercase;margin-bottom:30px;
+}
+.alert-msg {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(11px,2.5vw,14px);
+  color:var(--cyan);letter-spacing:2px;line-height:1.8;margin-bottom:28px;
+  border:1px solid rgba(0,245,255,0.15);padding:14px 20px;
+  background:rgba(0,245,255,0.03);
+}
+.alert-btn {
+  padding:clamp(12px,2vw,16px) clamp(28px,6vw,56px);
+  background:rgba(0,0,0,0.7);border:1px solid rgba(0,245,255,0.6);
+  color:var(--cyan);font-family:'Orbitron',monospace;font-size:clamp(11px,2.5vw,14px);
+  font-weight:700;letter-spacing:clamp(2px,0.5vw,4px);text-transform:uppercase;
+  cursor:pointer;transition:all 0.3s;min-height:48px;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+  animation:btnPulse 2.5s ease infinite;
+}
+.alert-btn:hover{background:rgba(0,245,255,0.1);box-shadow:0 0 30px rgba(0,245,255,0.5);}
+@keyframes btnPulse{0%,100%{box-shadow:0 0 10px rgba(0,245,255,0.3)}50%{box-shadow:0 0 30px rgba(0,245,255,0.7)}}
+
+/* ── LEVEL UP OVERLAY ── */
+#levelUpOverlay {
+  position:fixed;inset:0;z-index:9999;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.94);padding:20px;
+}
+#levelUpOverlay.show{display:flex;animation:lvlIn 0.5s ease;}
+@keyframes lvlIn{from{opacity:0}to{opacity:1}}
+
+.levelup-orb {
+  position:absolute;width:min(600px,90vw);height:min(600px,90vw);
+  border-radius:50%;background:radial-gradient(ellipse,rgba(0,245,255,0.06) 0%,transparent 70%);
+  animation:orbPulse 2s ease infinite;pointer-events:none;
+}
+@keyframes orbPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+
+.levelup-system-msg {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,13px);
+  letter-spacing:4px;color:rgba(0,245,255,0.5);margin-bottom:12px;
+  animation:blink 1.5s step-end infinite;
+}
+.levelup-text {
+  font-family:'Orbitron',monospace;font-size:clamp(36px,10vw,90px);font-weight:900;
+  letter-spacing:clamp(4px,1vw,10px);
+  background:linear-gradient(135deg,var(--gold),var(--cyan),var(--gold));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  animation:textPulse 1s ease infinite;text-align:center;
+  filter:drop-shadow(0 0 30px rgba(255,215,0,0.4));
+}
+.levelup-level {
+  font-family:'Orbitron',monospace;font-size:clamp(20px,6vw,52px);color:var(--gold);
+  margin-top:10px;letter-spacing:4px;text-align:center;
+  text-shadow:0 0 20px rgba(255,215,0,0.6);
+}
+.levelup-reward {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(11px,2.5vw,14px);
+  color:rgba(0,245,255,0.7);margin-top:14px;letter-spacing:2px;text-align:center;
+  padding:10px 20px;border:1px solid rgba(0,245,255,0.2);
+  background:rgba(0,245,255,0.04);
+}
+.levelup-close {
+  margin-top:28px;padding:clamp(10px,2vw,14px) clamp(24px,5vw,40px);
+  background:transparent;border:2px solid var(--gold);color:var(--gold);
+  font-family:'Orbitron',monospace;font-size:clamp(11px,2.5vw,13px);letter-spacing:3px;
+  cursor:pointer;transition:all 0.3s;min-height:48px;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+}
+.levelup-close:hover{background:rgba(255,215,0,0.1);box-shadow:var(--glow-gold);}
+
+/* ── TOPBAR ── */
+.topbar {
+  position:fixed;top:0;left:0;right:0;height:var(--topbar-h);
+  background:rgba(0,4,14,0.97);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 clamp(10px,2vw,20px);
+  gap:clamp(8px,2vw,20px);z-index:100;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+}
+.topbar-logo {
+  font-family:'Orbitron',monospace;font-size:clamp(10px,2vw,14px);font-weight:900;
+  letter-spacing:clamp(1px,0.4vw,3px);color:var(--cyan);text-shadow:var(--glow);white-space:nowrap;
+}
+.topbar-logo span{color:rgba(0,245,255,0.4);font-size:0.8em;}
+.topbar-player {
+  display:flex;align-items:center;gap:clamp(6px,1.5vw,12px);flex:1;min-width:0;
+}
+.player-avatar {
+  width:clamp(30px,6vw,38px);height:clamp(30px,6vw,38px);
+  border:2px solid var(--cyan);border-radius:50%;
+  background:linear-gradient(135deg,rgba(0,102,255,0.3),rgba(123,0,255,0.3));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',monospace;font-size:clamp(11px,2.5vw,14px);font-weight:700;
+  box-shadow:0 0 12px rgba(0,245,255,0.3);flex-shrink:0;
+  background-size:cover;background-position:center;cursor:pointer;
+  transition:box-shadow 0.3s;
+}
+.player-avatar:hover{box-shadow:0 0 20px rgba(0,245,255,0.6);}
+.player-info{display:flex;flex-direction:column;min-width:0;}
+.player-name {
+  font-family:'Orbitron',monospace;font-size:clamp(9px,2vw,13px);font-weight:700;
+  color:var(--cyan);letter-spacing:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.player-rank-badge {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(8px,1.8vw,10px);
+  letter-spacing:clamp(1px,0.3vw,2px);color:rgba(0,245,255,0.5);
+}
+.topbar-mini-xp{flex:1;max-width:180px;display:flex;flex-direction:column;gap:3px;}
+.mini-xp-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,245,255,0.45);letter-spacing:1px;}
+.mini-xp-bar{height:4px;background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.18);}
+.mini-xp-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width 0.8s ease;box-shadow:0 0 6px var(--cyan);}
+.topbar-actions{display:flex;align-items:center;gap:clamp(4px,1vw,8px);margin-left:auto;flex-shrink:0;}
+.topbar-btn {
+  padding:clamp(4px,1vw,6px) clamp(8px,2vw,14px);
+  background:transparent;border:1px solid var(--border);
+  color:rgba(0,245,255,0.65);font-family:'Share Tech Mono',monospace;
+  font-size:clamp(9px,2vw,11px);letter-spacing:1px;cursor:pointer;
+  transition:all 0.2s;min-height:36px;white-space:nowrap;
+}
+.topbar-btn:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,245,255,0.05);}
+.topbar-btn.admin-btn{border-color:rgba(255,215,0,0.4);color:var(--gold);}
+.topbar-btn.admin-btn:hover{background:rgba(255,215,0,0.08);box-shadow:var(--glow-gold);}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position:fixed;left:0;top:var(--topbar-h);bottom:0;
+  width:var(--sidebar-w);background:rgba(0,4,14,0.96);
+  border-right:1px solid var(--border);padding:16px 0;
+  z-index:50;overflow-y:auto;display:flex;flex-direction:column;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  transition:transform 0.3s;-webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.sidebar::-webkit-scrollbar{display:none;}
+.sidebar-mobile-title {
+  display:none;font-family:'Orbitron',monospace;font-size:15px;font-weight:900;
+  letter-spacing:3px;color:var(--cyan);text-shadow:var(--glow);
+  padding:14px 20px;border-bottom:1px solid var(--border);margin-bottom:6px;
+}
+.nav-section-label {
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;
+  color:rgba(0,245,255,0.25);padding:12px 20px 5px;margin-top:6px;text-transform:uppercase;
+}
+.nav-item {
+  display:flex;align-items:center;gap:12px;padding:clamp(10px,2vw,12px) 20px;
+  cursor:pointer;transition:all 0.2s;border-left:2px solid transparent;
+  color:rgba(0,245,255,0.45);font-size:clamp(12px,2.5vw,13px);
+  font-weight:600;letter-spacing:1.5px;position:relative;min-height:44px;
+  font-family:'Rajdhani',sans-serif;text-transform:uppercase;
+}
+.nav-item:hover{color:var(--cyan);background:rgba(0,245,255,0.04);}
+.nav-item.active{color:var(--cyan);border-left-color:var(--cyan);background:rgba(0,245,255,0.06);text-shadow:0 0 8px rgba(0,245,255,0.4);}
+.nav-icon{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
+.nav-badge {
+  position:absolute;right:14px;background:var(--red);color:white;
+  font-family:'Share Tech Mono',monospace;font-size:9px;padding:1px 5px;
+  border-radius:8px;display:none;min-width:18px;text-align:center;
+}
+
+/* ── MAIN ── */
+.main {
+  margin-left:var(--sidebar-w);margin-top:var(--topbar-h);
+  padding:clamp(14px,3vw,26px);
+  min-height:calc(100vh - var(--topbar-h));min-height:calc(100dvh - var(--topbar-h));
+  position:relative;z-index:1;padding-bottom:60px;
+}
+.page{display:none;}
+.page.active{display:block;animation:pageIn 0.3s ease;}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── PANEL ── */
+.panel {
+  background:var(--panel);border:1px solid var(--border);
+  padding:clamp(14px,3vw,22px);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 0 30px rgba(0,245,255,0.04),inset 0 0 30px rgba(0,245,255,0.015);
+  position:relative;clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));
+}
+.panel-title {
+  font-family:'Orbitron',monospace;font-size:clamp(10px,2.5vw,12px);font-weight:700;
+  letter-spacing:clamp(1px,0.4vw,3px);color:var(--cyan);
+  margin-bottom:clamp(12px,3vw,18px);padding-bottom:10px;
+  border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;
+}
+.panel-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(0,245,255,0.15),transparent);}
+
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(10px,2vw,16px);}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(10px,2vw,16px);}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,1.5vw,14px);}
+
+/* ── STAT CARDS ── */
+.stat-card {
+  background:rgba(0,10,28,0.8);border:1px solid rgba(0,245,255,0.12);
+  padding:clamp(12px,2vw,18px);text-align:center;transition:all 0.3s;cursor:default;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+}
+.stat-card:hover{border-color:rgba(0,245,255,0.35);transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,245,255,0.1);}
+.stat-card-label{font-family:'Share Tech Mono',monospace;font-size:clamp(8px,1.8vw,9px);letter-spacing:2px;color:rgba(0,245,255,0.35);margin-bottom:6px;}
+.stat-card-value{font-family:'Orbitron',monospace;font-size:clamp(18px,4vw,24px);font-weight:700;color:var(--cyan);text-shadow:0 0 12px rgba(0,245,255,0.5);}
+.stat-card-sub{font-family:'Share Tech Mono',monospace;font-size:clamp(8px,1.8vw,10px);color:rgba(0,245,255,0.35);margin-top:4px;}
+
+/* ── PAGE HEADER ── */
+.page-header{margin-bottom:clamp(14px,3vw,24px);}
+.page-header-title {
+  font-family:'Orbitron',monospace;font-size:clamp(16px,4vw,24px);font-weight:900;
+  letter-spacing:clamp(2px,0.5vw,5px);
+  background:linear-gradient(135deg,#fff 0%,var(--cyan) 50%,var(--blue) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.page-header-sub {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);
+  color:rgba(0,245,255,0.35);letter-spacing:2px;margin-top:5px;
+}
+
+/* ── XP BAR ── */
+.xp-section{margin:clamp(10px,2vw,16px) 0;}
+.xp-labels{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);color:rgba(0,245,255,0.55);margin-bottom:5px;}
+.xp-bar{height:clamp(14px,3vw,20px);background:rgba(0,245,255,0.04);border:1px solid rgba(0,245,255,0.18);position:relative;overflow:hidden;}
+.xp-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--blue),var(--cyan));transition:width 0.8s cubic-bezier(.4,0,.2,1);position:relative;}
+.xp-fill::after{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shimmer 2s linear infinite;}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(300%)}}
+
+/* ── HP/MP BARS ── */
+.bar-row{margin:8px 0;}
+.bar-label{display:flex;justify-content:space-between;font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);margin-bottom:4px;}
+.bar{height:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);}
+.bar-fill{height:100%;transition:width 0.6s ease;}
+.hp-fill{background:linear-gradient(90deg,#cc2222,#ff6666);box-shadow:0 0 8px rgba(255,68,68,0.5);}
+.mp-fill{background:linear-gradient(90deg,#0044cc,#44aaff);box-shadow:0 0 8px rgba(0,102,255,0.5);}
+
+/* ── RANK ── */
+.rank-display {
+  font-family:'Orbitron',monospace;font-size:clamp(22px,6vw,36px);font-weight:900;
+  text-align:center;padding:clamp(10px,2vw,18px);border:2px solid;margin:10px 0;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+}
+.rank-E{color:#999;border-color:#555;}
+.rank-D{color:#4488ff;border-color:#4488ff;text-shadow:0 0 12px #4488ff;}
+.rank-C{color:#44ff88;border-color:#44ff88;text-shadow:0 0 12px #44ff88;}
+.rank-B{color:#ff8800;border-color:#ff8800;text-shadow:0 0 12px #ff8800;}
+.rank-A{color:#ff44ff;border-color:#ff44ff;text-shadow:0 0 12px #ff44ff;}
+.rank-S{color:var(--gold);border-color:var(--gold);text-shadow:0 0 20px var(--gold);}
+.rank-National{color:var(--cyan);border-color:var(--cyan);text-shadow:0 0 25px var(--cyan);}
+.rank-Monarch{color:#fff;border-color:#fff;text-shadow:0 0 30px var(--cyan),0 0 60px var(--purple);animation:monarchGlow 2s ease infinite;}
+@keyframes monarchGlow{0%,100%{text-shadow:0 0 30px var(--cyan),0 0 60px var(--purple)}50%{text-shadow:0 0 50px var(--gold),0 0 100px var(--cyan)}}
+
+/* ── CORE STATS ── */
+.core-stat{display:flex;justify-content:space-between;align-items:center;padding:clamp(7px,1.5vw,10px) 0;border-bottom:1px solid rgba(0,245,255,0.07);}
+.core-stat-name{font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,12px);letter-spacing:2px;color:rgba(0,245,255,0.55);display:flex;align-items:center;gap:8px;}
+.core-stat-val{font-family:'Orbitron',monospace;font-size:clamp(13px,3vw,17px);color:var(--cyan);font-weight:700;}
+.stat-plus-btn {
+  background:transparent;border:1px solid rgba(0,245,255,0.3);color:var(--cyan);
+  width:28px;height:28px;min-width:28px;min-height:28px;cursor:pointer;font-size:15px;
+  display:flex;align-items:center;justify-content:center;transition:all 0.2s;margin-left:8px;
+}
+.stat-plus-btn:hover{background:rgba(0,245,255,0.15);box-shadow:0 0 10px rgba(0,245,255,0.3);}
+.stat-plus-btn:disabled{opacity:0.2;cursor:not-allowed;}
+.stat-points-display{background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);padding:8px 14px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,12px);color:var(--gold);margin-bottom:14px;letter-spacing:1px;}
+
+/* ── QUESTS ── */
+.quest-item {
+  display:flex;align-items:center;gap:clamp(8px,2vw,14px);padding:clamp(10px,2vw,14px);
+  border:1px solid rgba(0,245,255,0.08);margin-bottom:8px;
+  background:rgba(0,8,22,0.7);transition:all 0.25s;cursor:pointer;min-height:50px;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));
+}
+.quest-item:hover:not(.completed){border-color:rgba(0,245,255,0.28);background:rgba(0,245,255,0.04);}
+.quest-item.completed{opacity:0.38;}
+.quest-checkbox{width:clamp(18px,4vw,22px);height:clamp(18px,4vw,22px);border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;transition:all 0.3s;}
+.quest-item.completed .quest-checkbox{background:var(--cyan);color:black;}
+.quest-info{flex:1;min-width:0;}
+.quest-name{font-size:clamp(13px,3vw,15px);font-weight:600;letter-spacing:1px;margin-bottom:2px;}
+.quest-desc{font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,10px);color:rgba(0,245,255,0.35);}
+.quest-reward{font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,12px);color:var(--gold);text-align:right;flex-shrink:0;}
+
+/* ── ACHIEVEMENTS ── */
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(130px,44%),1fr));gap:clamp(8px,2vw,12px);}
+.ach-card{padding:clamp(10px,2vw,16px) clamp(8px,1.5vw,12px);border:1px solid rgba(0,245,255,0.08);background:rgba(0,8,22,0.7);text-align:center;transition:all 0.3s;position:relative;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));}
+.ach-card.unlocked{border-color:rgba(255,215,0,0.35);background:rgba(255,215,0,0.04);}
+.ach-card.locked{filter:brightness(0.35);}
+.ach-icon{font-size:clamp(22px,5vw,28px);margin-bottom:8px;}
+.ach-name{font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,10px);letter-spacing:1px;color:var(--cyan);line-height:1.3;}
+.ach-card.unlocked .ach-name{color:var(--gold);}
+
+/* ── SKILLS ── */
+.skill-category{margin-bottom:clamp(16px,3vw,26px);}
+.skill-cat-title{font-family:'Orbitron',monospace;font-size:clamp(10px,2.5vw,12px);letter-spacing:3px;color:var(--cyan);margin-bottom:12px;opacity:0.6;}
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:10px;}
+.skill-card{padding:clamp(10px,2vw,14px);border:1px solid rgba(0,245,255,0.08);background:rgba(0,8,22,0.8);cursor:pointer;transition:all 0.25s;position:relative;min-height:44px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px));}
+.skill-card:hover{border-color:rgba(0,245,255,0.28);}
+.skill-card.unlocked{border-color:rgba(0,245,255,0.25);}
+.skill-card.locked{filter:brightness(0.28);cursor:not-allowed;}
+.skill-name{font-family:'Share Tech Mono',monospace;font-size:clamp(11px,2.5vw,13px);letter-spacing:1px;color:var(--cyan);margin-bottom:4px;}
+.skill-level-bar{height:3px;background:rgba(0,245,255,0.08);margin:8px 0 4px;}
+.skill-level-fill{height:100%;background:var(--cyan);transition:width 0.5s;box-shadow:0 0 4px var(--cyan);}
+.skill-desc{font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,10px);color:rgba(0,245,255,0.35);}
+.skill-unlock-req{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--red);margin-top:4px;}
+
+/* ── INVENTORY ── */
+.inv-slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(88px,28%),1fr));gap:clamp(4px,1vw,8px);}
+.inv-slot{aspect-ratio:1;border:1px solid rgba(0,245,255,0.12);background:rgba(0,5,18,0.8);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;padding:6px;text-align:center;}
+.inv-slot:hover{border-color:rgba(0,245,255,0.35);}
+.inv-slot.empty{opacity:0.25;}
+.inv-item-icon{font-size:clamp(18px,4vw,24px);}
+.inv-item-name{font-family:'Share Tech Mono',monospace;font-size:clamp(7px,1.8vw,9px);color:rgba(0,245,255,0.55);margin-top:4px;line-height:1.2;}
+.inv-slot.rarity-uncommon{border-color:rgba(0,255,136,0.3);}
+.inv-slot.rarity-rare{border-color:rgba(0,102,255,0.4);}
+.inv-slot.rarity-epic{border-color:rgba(123,0,255,0.4);}
+.inv-slot.rarity-legendary{border-color:rgba(255,215,0,0.45);}
+.inv-slot.rarity-srank{border-color:rgba(0,245,255,0.55);box-shadow:inset 0 0 12px rgba(0,245,255,0.1);}
+
+/* ── SHOP ── */
+.shop-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding:12px 18px;background:rgba(0,8,22,0.9);border:1px solid rgba(255,215,0,0.18);}
+.shop-gold{font-family:'Orbitron',monospace;font-size:clamp(14px,3vw,18px);font-weight:700;color:var(--gold);text-shadow:0 0 10px rgba(255,215,0,0.4);letter-spacing:2px;}
+.shop-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;overflow-x:auto;scrollbar-width:none;}
+.shop-tabs::-webkit-scrollbar{display:none;}
+.shop-tab{padding:8px clamp(10px,2.5vw,16px);font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,10px);letter-spacing:1px;cursor:pointer;color:rgba(0,245,255,0.35);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;white-space:nowrap;min-height:40px;display:flex;align-items:center;}
+.shop-tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.shop-tab:hover:not(.active){color:rgba(0,245,255,0.65);}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:clamp(8px,2vw,12px);}
+.shop-item{padding:clamp(12px,2vw,16px);background:rgba(0,8,22,0.8);border:1px solid rgba(0,245,255,0.08);transition:all 0.3s;cursor:pointer;position:relative;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));}
+.shop-item:hover{border-color:rgba(0,245,255,0.28);background:rgba(0,245,255,0.03);}
+.shop-item.owned{opacity:0.45;}
+.shop-item.owned::after{content:'OWNED';position:absolute;top:8px;right:8px;font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--green);border:1px solid var(--green);padding:2px 6px;}
+.shop-item-header{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.shop-item-icon{font-size:clamp(24px,5vw,30px);flex-shrink:0;}
+.shop-item-info{flex:1;min-width:0;}
+.shop-item-name{font-size:clamp(12px,2.5vw,14px);font-weight:700;letter-spacing:1px;margin-bottom:2px;}
+.shop-item-rarity{font-family:'Share Tech Mono',monospace;font-size:clamp(8px,1.8vw,9px);letter-spacing:2px;}
+.shop-item-desc{font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,10px);color:rgba(0,245,255,0.3);margin-bottom:8px;line-height:1.4;}
+.shop-item-stats{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.shop-stat-tag{font-family:'Share Tech Mono',monospace;font-size:clamp(8px,1.8vw,9px);padding:2px 6px;border:1px solid rgba(0,245,255,0.12);background:rgba(0,245,255,0.04);color:var(--green);letter-spacing:1px;}
+.shop-item-footer{display:flex;justify-content:space-between;align-items:center;}
+.shop-item-price{font-family:'Orbitron',monospace;font-size:clamp(12px,2.5vw,14px);font-weight:700;color:var(--gold);}
+.shop-buy-btn{padding:5px 12px;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,10px);letter-spacing:2px;cursor:pointer;transition:all 0.2s;min-height:30px;}
+.shop-buy-btn:hover{background:rgba(0,245,255,0.1);box-shadow:0 0 10px rgba(0,245,255,0.2);}
+.rarity-common .shop-item-name{color:#999;} .rarity-common .shop-item-rarity{color:#777;}
+.rarity-uncommon{border-color:rgba(0,255,136,0.18);} .rarity-uncommon .shop-item-name{color:var(--green);} .rarity-uncommon .shop-item-rarity{color:var(--green);}
+.rarity-rare{border-color:rgba(0,102,255,0.25);} .rarity-rare .shop-item-name{color:#4488ff;} .rarity-rare .shop-item-rarity{color:#4488ff;}
+.rarity-epic{border-color:rgba(123,0,255,0.28);} .rarity-epic .shop-item-name{color:#aa44ff;} .rarity-epic .shop-item-rarity{color:#aa44ff;}
+.rarity-legendary{border-color:rgba(255,215,0,0.28);} .rarity-legendary .shop-item-name{color:var(--gold);text-shadow:0 0 8px rgba(255,215,0,0.3);} .rarity-legendary .shop-item-rarity{color:var(--gold);}
+.rarity-srank{border-color:rgba(0,245,255,0.4);box-shadow:0 0 15px rgba(0,245,255,0.08);} .rarity-srank .shop-item-name{color:var(--cyan);text-shadow:0 0 10px var(--cyan);} .rarity-srank .shop-item-rarity{color:var(--cyan);}
+
+/* ── TABS ── */
+.sys-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:clamp(12px,3vw,20px);overflow-x:auto;scrollbar-width:none;}
+.sys-tabs::-webkit-scrollbar{display:none;}
+.sys-tab{padding:clamp(8px,2vw,10px) clamp(12px,3vw,18px);font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2.5vw,11px);letter-spacing:2px;cursor:pointer;color:rgba(0,245,255,0.35);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.2s;white-space:nowrap;min-height:44px;display:flex;align-items:center;}
+.sys-tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+.sys-tab:hover:not(.active){color:rgba(0,245,255,0.65);}
+
+/* ── STREAK ── */
+.streak-days{display:flex;gap:clamp(4px,1vw,8px);flex-wrap:wrap;}
+.streak-day{width:clamp(28px,6vw,38px);height:clamp(28px,6vw,38px);border:1px solid rgba(0,245,255,0.18);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:clamp(9px,2vw,11px);font-weight:700;transition:all 0.3s;}
+.streak-day.active{background:var(--cyan);color:black;border-color:var(--cyan);box-shadow:0 0 12px var(--cyan);}
+.streak-day.today{border-color:var(--gold);color:var(--gold);animation:pulseBorder 1.5s ease infinite;}
+@keyframes pulseBorder{0%,100%{box-shadow:0 0 5px var(--gold)}50%{box-shadow:0 0 18px var(--gold)}}
+
+/* ── LEADERBOARD ── */
+.leaderboard-row{display:flex;align-items:center;gap:clamp(8px,2vw,14px);padding:clamp(8px,2vw,12px);border-bottom:1px solid rgba(0,245,255,0.05);transition:background 0.2s;}
+.leaderboard-row:hover{background:rgba(0,245,255,0.03);}
+.lb-rank{font-family:'Orbitron',monospace;font-size:clamp(12px,3vw,16px);font-weight:700;width:32px;text-align:center;flex-shrink:0;}
+.lb-rank.gold{color:var(--gold);text-shadow:var(--glow-gold);}
+.lb-rank.silver{color:#aaa;}
+.lb-rank.bronze{color:#cd7f32;}
+.lb-name{flex:1;font-size:clamp(12px,3vw,15px);font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.lb-level{font-family:'Orbitron',monospace;font-size:clamp(10px,2.5vw,13px);color:rgba(0,245,255,0.55);flex-shrink:0;}
+
+/* ── DUNGEON PROCESSING OVERLAY ── */
+#dungeonProcessOverlay {
+  display:none;position:fixed;inset:0;z-index:9996;
+  background:rgba(0,0,0,0.97);
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(4px);
+}
+#dungeonProcessOverlay.show{display:flex;animation:alertIn 0.4s ease;}
+.proc-frame {
+  max-width:540px;width:100%;text-align:center;
+  border:1px solid rgba(0,245,255,0.3);
+  padding:clamp(24px,5vw,48px) clamp(20px,5vw,48px);
+  background:rgba(0,5,15,0.98);
+  clip-path:polygon(0 0,calc(100% - 20px) 0,100% 20px,100% 100%,20px 100%,0 calc(100% - 20px));
+  box-shadow:0 0 80px rgba(0,245,255,0.15);
+}
+.proc-bar-wrap {
+  width:100%;height:6px;background:rgba(0,245,255,0.08);
+  border:1px solid rgba(0,245,255,0.2);margin-bottom:16px;
+  position:relative;overflow:hidden;
+}
+.proc-bar-fill {
+  height:100%;width:0%;
+  background:linear-gradient(90deg,var(--blue),var(--cyan),var(--green));
+  transition:width 0.5s ease;box-shadow:0 0 10px var(--cyan);
+}
+.proc-log-box {
+  width:100%;max-height:200px;overflow-y:auto;
+  background:rgba(0,2,8,0.8);border:1px solid rgba(0,245,255,0.08);
+  padding:10px;text-align:left;
+  font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2.2vw,11px);
+  letter-spacing:1px;color:rgba(0,245,255,0.6);line-height:2;
+  scrollbar-width:thin;scrollbar-color:rgba(0,245,255,0.2) transparent;
+}
+.proc-log-entry { display:block; animation:slideIn 0.3s ease; }
+.proc-log-entry.warn { color:var(--red); }
+
+/* Monster tags in dungeon info */
+.monster-tag {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(8px,2vw,10px);
+  color:rgba(0,245,255,0.45);letter-spacing:1px;padding:2px 0;
+}
+
+/* ── SHADOW LOCKED STYLE ── */
+.locked-shadow {
+  opacity:0.15;filter:grayscale(1) brightness(0.4);
+  position:relative;overflow:hidden;
+}
+.locked-shadow::after {
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(45deg,transparent,transparent 4px,rgba(255,0,0,0.04) 4px,rgba(255,0,0,0.04) 8px);
+}
+.locked-msg {
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  color:rgba(0,245,255,0.2);letter-spacing:2px;margin-top:6px;
+}
+
+/* ── DUNGEON PROCESSING BAR (inline in dungeon panel) ── */
+#page-dungeon .proc-bar-wrap {
+  width:80%;margin:0 auto 16px;
+}
+  text-align:center;padding:clamp(20px,5vw,40px);
+  position:relative;
+}
+.gate-rank-ring {
+  width:clamp(140px,30vw,200px);height:clamp(140px,30vw,200px);
+  border-radius:50%;border:3px solid var(--cyan);margin:0 auto 20px;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;animation:ringRotate 8s linear infinite;
+  box-shadow:0 0 40px rgba(0,245,255,0.3),inset 0 0 40px rgba(0,245,255,0.08);
+}
+@keyframes ringRotate{from{box-shadow:0 0 40px rgba(0,245,255,0.3),inset 0 0 40px rgba(0,245,255,0.08)}50%{box-shadow:0 0 60px rgba(0,245,255,0.6),inset 0 0 60px rgba(0,245,255,0.15)}to{box-shadow:0 0 40px rgba(0,245,255,0.3),inset 0 0 40px rgba(0,245,255,0.08)}}
+.gate-rank-letter {
+  font-family:'Orbitron',monospace;font-size:clamp(50px,12vw,80px);font-weight:900;
+  color:var(--cyan);text-shadow:0 0 30px var(--cyan);
+}
+.gate-status {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(11px,2.5vw,14px);
+  letter-spacing:3px;margin-bottom:20px;
+}
+.gate-status.ready{color:var(--green);text-shadow:0 0 10px var(--green);}
+.gate-status.cooldown{color:var(--orange);}
+.dungeon-btn {
+  padding:clamp(12px,2vw,16px) clamp(30px,6vw,60px);
+  background:rgba(0,245,255,0.06);border:1px solid var(--cyan);color:var(--cyan);
+  font-family:'Orbitron',monospace;font-size:clamp(11px,2.5vw,14px);font-weight:700;
+  letter-spacing:3px;cursor:pointer;transition:all 0.3s;min-height:52px;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+}
+.dungeon-btn:hover:not(:disabled){background:rgba(0,245,255,0.12);box-shadow:0 0 30px rgba(0,245,255,0.4);}
+.dungeon-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.dungeon-rewards-preview {
+  display:flex;gap:16px;justify-content:center;margin-top:16px;flex-wrap:wrap;
+}
+.dungeon-reward-tag {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,12px);
+  padding:6px 14px;border:1px solid rgba(255,215,0,0.25);color:var(--gold);background:rgba(255,215,0,0.04);
+}
+.dungeon-log {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);
+  color:rgba(0,245,255,0.5);line-height:2;margin-top:10px;
+  max-height:160px;overflow-y:auto;padding:10px;
+  border:1px solid rgba(0,245,255,0.08);background:rgba(0,5,15,0.5);
+  text-align:left;
+}
+.dungeon-log-entry{display:block;border-bottom:1px solid rgba(0,245,255,0.05);padding:3px 0;}
+.dungeon-log-entry.success{color:var(--green);}
+.dungeon-log-entry.gold{color:var(--gold);}
+
+/* ── SHADOW ARMY PAGE ── */
+.shadow-header {
+  display:flex;align-items:center;gap:14px;margin-bottom:20px;
+  padding:14px 20px;background:rgba(0,0,0,0.5);border:1px solid rgba(0,245,255,0.1);
+}
+.shadow-count {
+  font-family:'Orbitron',monospace;font-size:clamp(20px,5vw,32px);font-weight:900;
+  color:var(--cyan);text-shadow:0 0 20px var(--cyan);
+}
+.shadow-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(200px,100%),1fr));gap:12px;}
+.shadow-card {
+  padding:clamp(14px,3vw,20px);border:1px solid rgba(0,245,255,0.12);
+  background:rgba(0,4,14,0.9);transition:all 0.3s;
+  clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));
+}
+.shadow-card.deployed{border-color:rgba(255,68,68,0.5);background:rgba(255,0,0,0.04);}
+.shadow-card:hover{border-color:rgba(0,245,255,0.3);}
+.shadow-name {
+  font-family:'Orbitron',monospace;font-size:clamp(13px,3vw,16px);font-weight:900;
+  letter-spacing:2px;margin-bottom:4px;
+}
+.shadow-grade {
+  font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);
+  letter-spacing:2px;margin-bottom:10px;opacity:0.6;
+}
+.shadow-type-KNIGHT .shadow-name{color:#88aaff;text-shadow:0 0 10px #88aaff;}
+.shadow-type-ELITE .shadow-name{color:var(--purple);text-shadow:0 0 10px var(--purple);}
+.shadow-type-GENERAL .shadow-name{color:var(--gold);text-shadow:0 0 15px var(--gold);}
+.shadow-type-MARSHAL .shadow-name{color:var(--cyan);text-shadow:0 0 15px var(--cyan);}
+.shadow-type-MONARCH .shadow-name{color:#fff;text-shadow:0 0 20px var(--cyan),0 0 40px var(--purple);}
+.shadow-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.shadow-stat-tag{font-family:'Share Tech Mono',monospace;font-size:9px;padding:2px 6px;border:1px solid rgba(0,245,255,0.12);color:rgba(0,245,255,0.5);}
+.shadow-deploy-btn {
+  width:100%;padding:8px;background:transparent;
+  border:1px solid rgba(0,245,255,0.3);color:var(--cyan);
+  font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,10px);
+  letter-spacing:2px;cursor:pointer;transition:all 0.2s;min-height:36px;
+}
+.shadow-deploy-btn:hover{background:rgba(0,245,255,0.08);box-shadow:0 0 10px rgba(0,245,255,0.2);}
+.shadow-card.deployed .shadow-deploy-btn{border-color:rgba(255,68,68,0.5);color:var(--red);}
+
+/* ── SIDEBAR TOGGLE MOBILE ── */
+.sidebar-toggle{display:none;background:none;border:none;color:var(--cyan);font-size:clamp(20px,4vw,24px);cursor:pointer;padding:8px;min-width:44px;min-height:44px;align-items:center;justify-content:center;}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:49;backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);}
+.sidebar-overlay.active{display:block;}
+.profile-link{text-decoration:none;color:inherit;display:block;min-width:0;flex:1;}
+
+/* ── ORBS ── */
+.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none;z-index:0;opacity:0.05;will-change:transform;}
+.orb-1{width:min(600px,80vw);height:min(600px,80vw);background:var(--blue);top:-200px;left:-200px;}
+.orb-2{width:min(400px,60vw);height:min(400px,60vw);background:var(--purple);bottom:-100px;right:-100px;}
+
+/* ── LOADING ── */
+#loadingScreen{position:fixed;inset:0;background:var(--darker);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:20px;}
+.loading-text{font-family:'Orbitron',monospace;font-size:clamp(14px,4vw,20px);letter-spacing:clamp(2px,0.5vw,5px);color:var(--cyan);text-shadow:var(--glow);text-align:center;}
+.loading-sub{font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,12px);color:rgba(0,245,255,0.4);letter-spacing:3px;text-align:center;margin-top:-10px;}
+.loading-bar{width:min(320px,80vw);height:4px;background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.18);}
+.loading-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));width:0%;transition:width 0.1s;box-shadow:0 0 8px var(--cyan);}
+.loading-status{font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2.5vw,11px);color:rgba(0,245,255,0.4);letter-spacing:2px;text-align:center;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  :root{--sidebar-w:280px;}
+  .sidebar{transform:translateX(-100%);z-index:200;width:var(--sidebar-w);}
+  .sidebar.open{transform:translateX(0);}
+  .sidebar-mobile-title{display:block;}
+  .main{margin-left:0;}
+  .sidebar-toggle{display:flex;}
+  .grid-4{grid-template-columns:repeat(2,1fr);}
+  .grid-3{grid-template-columns:1fr;}
+  .grid-2{grid-template-columns:1fr;}
+  .topbar-mini-xp{display:none;}
+  .topbar-actions .topbar-btn:nth-child(1){display:none;}
+}
+@media(max-width:480px){
+  .topbar{padding:0 8px;gap:6px;}
+  .grid-4{grid-template-columns:repeat(2,1fr);gap:6px;}
+  .stat-card{padding:8px;}
+}
+@media(min-width:769px) and (max-width:1024px){
+  :root{--sidebar-w:200px;}
+  .grid-4{grid-template-columns:repeat(2,1fr);}
+  .grid-3{grid-template-columns:repeat(2,1fr);}
+}
+@media(min-width:1400px){
+  :root{--sidebar-w:250px;}
+  .main{padding:28px 36px;max-width:1600px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);gap:18px;}
+}
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- ── LOADING SCREEN ── -->
+<div id="loadingScreen">
+  <div class="loading-text">ARCHITECT SYSTEM</div>
+  <div class="loading-sub">INITIALIZING HUNTER PROTOCOLS</div>
+  <div class="loading-bar"><div class="loading-fill" id="loadFill"></div></div>
+  <div class="loading-status" id="loadStatus">LOADING CORE MODULES...</div>
+</div>
+
+<!-- ── SYSTEM ALERT (DAILY QUEST REMINDER / PUNISHMENT ZONE) ── -->
+<div id="systemAlertOverlay">
+  <div class="alert-frame">
+    <div class="alert-system-id">⚠ ARCHITECT SYSTEM — MANDATORY QUEST PROTOCOL</div>
+    <div class="alert-title">ARISE</div>
+    <div class="alert-sub">[ SHADOW MONARCH PROTOCOL · ACTIVE ]</div>
+    <div class="alert-msg" id="alertMessage">
+      DAILY QUESTS HAVE BEEN ASSIGNED.<br>
+      COMPLETION IS NOT OPTIONAL.<br>
+      FAILURE CARRIES CONSEQUENCES.
+    </div>
+    <button class="alert-btn" onclick="closeSystemAlert()">I ACCEPT THIS TRIAL</button>
+  </div>
+</div>
+
+<!-- ── LEVEL UP OVERLAY ── -->
+<div id="levelUpOverlay">
+  <div class="levelup-orb"></div>
+  <div class="levelup-system-msg">⚠ SYSTEM NOTIFICATION</div>
+  <div class="levelup-text">LEVEL UP!</div>
+  <div class="levelup-level" id="levelUpNum">LEVEL 2</div>
+  <div class="levelup-reward" id="levelUpReward">+3 STAT POINTS · +20 GOLD AWARDED</div>
+  <button class="levelup-close" onclick="closeLevelUp()">ACKNOWLEDGE</button>
+</div>
+
+<!-- ── NOTIFICATIONS ── -->
+<div id="notification"></div>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">&#9776;</button>
+  <div class="topbar-logo">SOLO LEVELING<span> v2.0</span></div>
+  <a href="profile.html" class="profile-link">
+    <div class="topbar-player">
+      <div class="player-avatar" id="avatarIcon">?</div>
+      <div class="player-info">
+        <div class="player-name" id="topName">LOADING...</div>
+        <div class="player-rank-badge" id="topRankBadge">RANK E HUNTER</div>
+      </div>
+    </div>
+  </a>
+  <div class="topbar-mini-xp">
+    <div class="mini-xp-label">LVL <span id="topLevel">1</span> · XP <span id="topXPLabel">0/100</span></div>
+    <div class="mini-xp-bar"><div class="mini-xp-fill" id="topXPFill" style="width:0%"></div></div>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-btn" onclick="navigate('leaderboard')">RANKS</button>
+    <button class="topbar-btn" onclick="logout()">LOGOUT</button>
+    <button id="adminBtn" class="topbar-btn admin-btn" style="display:none;" onclick="window.location.href='admin.html'">⚡ ADMIN</button>
+  </div>
+</div>
+
+<div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-mobile-title">ARCHITECT SYSTEM</div>
+  <div class="nav-section-label">MAIN</div>
+  <div class="nav-item active" onclick="navigate('dashboard')"><span class="nav-icon">◈</span>DASHBOARD</div>
+  <div class="nav-item" onclick="navigate('stats')"><span class="nav-icon">◆</span>PLAYER STATS</div>
+  <div class="nav-section-label">PROGRESSION</div>
+  <div class="nav-item" onclick="navigate('quests')"><span class="nav-icon">◉</span>QUESTS<span class="nav-badge" id="questBadge">0</span></div>
+  <div class="nav-item" onclick="navigate('skills')"><span class="nav-icon">✦</span>SKILLS</div>
+  <div class="nav-item" onclick="navigate('achievements')"><span class="nav-icon">✦</span>ACHIEVEMENTS</div>
+  <div class="nav-section-label">WORLD</div>
+  <div class="nav-item" onclick="navigate('dungeon')"><span class="nav-icon">⬡</span>DUNGEON GATE</div>
+  <div class="nav-item" onclick="navigate('shadow')"><span class="nav-icon">☠</span>SHADOW ARMY</div>
+  <div class="nav-item" onclick="navigate('inventory')"><span class="nav-icon">◧</span>INVENTORY</div>
+  <div class="nav-section-label">RECORDS</div>
+  <div class="nav-item" onclick="navigate('streak')"><span class="nav-icon">◈</span>STREAKS</div>
+  <div class="nav-item" onclick="navigate('leaderboard')"><span class="nav-icon">◈</span>LEADERBOARD</div>
+</div>
+
+<!-- ── MAIN CONTENT ── -->
+<div class="main" id="mainContent">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div class="page-header-title">DASHBOARD</div>
+      <div class="page-header-sub" id="dashGreeting">WELCOME BACK, HUNTER</div>
+    </div>
+    <div class="grid-4" style="margin-bottom:16px">
+      <div class="stat-card">
+        <div class="stat-card-label">LEVEL</div>
+        <div class="stat-card-value" id="dashLevel">1</div>
+        <div class="stat-card-sub" id="dashRank">RANK E</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">TOTAL XP</div>
+        <div class="stat-card-value" id="dashTotalXP">0</div>
+        <div class="stat-card-sub">EXPERIENCE</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">GOLD</div>
+        <div class="stat-card-value" id="dashGold" style="color:var(--gold)">0</div>
+        <div class="stat-card-sub">CURRENCY</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">STREAK</div>
+        <div class="stat-card-value" id="dashStreak" style="color:var(--orange)">0</div>
+        <div class="stat-card-sub">DAY LOGIN</div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="panel">
+        <div class="panel-title">PLAYER STATUS</div>
+        <div class="rank-display" id="dashRankDisplay">E</div>
+        <div style="text-align:center;font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,12px);color:rgba(0,245,255,0.45);margin-bottom:14px;letter-spacing:2px;" id="dashTitle">ORDINARY HUMAN</div>
+        <div class="xp-section">
+          <div class="xp-labels"><span>XP</span><span id="xpLabelDash">0 / 100</span></div>
+          <div class="xp-bar"><div class="xp-fill" id="xpFillDash" style="width:0%"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span style="color:#ff6666">HP</span><span id="hpLabel">100/100</span></div>
+          <div class="bar"><div class="bar-fill hp-fill" id="hpFill" style="width:100%"></div></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-label"><span style="color:#4488ff">MP</span><span id="mpLabel">50/50</span></div>
+          <div class="bar"><div class="bar-fill mp-fill" id="mpFill" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">TODAY'S QUESTS</div>
+        <div id="dashQuestList"></div>
+        <div style="margin-top:14px;text-align:center;">
+          <button class="topbar-btn" onclick="navigate('quests')" style="width:100%;padding:10px;letter-spacing:3px;">VIEW ALL QUESTS</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid-3">
+      <div class="panel">
+        <div class="panel-title">CORE STATS PREVIEW</div>
+        <div id="dashStatsPreview"></div>
+        <div style="margin-top:10px;text-align:center;">
+          <button class="topbar-btn" onclick="navigate('stats')" style="width:100%;padding:8px">MANAGE STATS</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">RECENT ACHIEVEMENTS</div>
+        <div id="dashAchievements" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">STREAK TRACKER</div>
+        <div style="text-align:center;margin-bottom:14px;">
+          <div style="font-family:'Orbitron',monospace;font-size:clamp(26px,7vw,42px);font-weight:900;color:var(--orange);text-shadow:0 0 15px var(--orange);" id="streakNum">0</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);color:rgba(0,245,255,0.35);letter-spacing:2px">DAY STREAK</div>
+        </div>
+        <div class="streak-days" id="streakDays"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="page" id="page-stats">
+    <div class="page-header">
+      <div class="page-header-title">PLAYER STATS</div>
+      <div class="page-header-sub">ALLOCATE STAT POINTS TO INCREASE YOUR POWER</div>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-title">PRIMARY STATS</div>
+        <div class="stat-points-display" id="statPointsDisplay">AVAILABLE STAT POINTS: 0</div>
+        <div id="primaryStatsDisplay"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">DERIVED STATS</div>
+        <div id="derivedStatsDisplay"></div>
+        <div style="margin-top:20px">
+          <div class="panel-title" style="font-size:clamp(9px,2vw,11px)">RANK PROGRESSION</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);color:rgba(0,245,255,0.45);line-height:2.4">
+            <div>RANK E → RANK D: LVL 10</div>
+            <div>RANK D → RANK C: LVL 25</div>
+            <div>RANK C → RANK B: LVL 50</div>
+            <div>RANK B → RANK A: LVL 75</div>
+            <div>RANK A → RANK S: LVL 100</div>
+            <div>RANK S → NATIONAL: LVL 150</div>
+            <div>NATIONAL → MONARCH: LVL 200</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUESTS -->
+  <div class="page" id="page-quests">
+    <div class="page-header">
+      <div class="page-header-title">QUEST BOARD</div>
+      <div class="page-header-sub">COMPLETE QUESTS TO EARN XP AND REWARDS</div>
+    </div>
+    <div class="sys-tabs">
+      <div class="sys-tab active" onclick="switchQuestTab('daily')">DAILY</div>
+      <div class="sys-tab" onclick="switchQuestTab('weekly')">WEEKLY</div>
+      <div class="sys-tab" onclick="switchQuestTab('special')">SPECIAL</div>
+    </div>
+    <div id="questPageContent"></div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="page" id="page-skills">
+    <div class="page-header">
+      <div class="page-header-title">SKILL TREE</div>
+      <div class="page-header-sub">UNLOCK AND UPGRADE YOUR ABILITIES</div>
+    </div>
+    <div id="skillsContent"></div>
+  </div>
+
+  <!-- ACHIEVEMENTS -->
+  <div class="page" id="page-achievements">
+    <div class="page-header">
+      <div class="page-header-title">ACHIEVEMENTS</div>
+      <div class="page-header-sub">MILESTONES OF A TRUE HUNTER</div>
+    </div>
+    <div class="panel"><div class="ach-grid" id="achievementsGrid"></div></div>
+  </div>
+
+  <!-- DUNGEON GATE -->
+  <div class="page" id="page-dungeon">
+    <div class="page-header">
+      <div class="page-header-title">DUNGEON GATE</div>
+      <div class="page-header-sub">ENTER THE GATE — SURVIVE OR PERISH</div>
+    </div>
+
+    <!-- DUNGEON PROCESSING OVERLAY -->
+    <div id="dungeonProcessOverlay">
+      <div class="proc-frame">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:4px;color:rgba(0,245,255,0.4);margin-bottom:10px;animation:blink 1.5s step-end infinite">⚠ DUNGEON BREACH IN PROGRESS</div>
+        <div id="procGateRank" style="font-family:'Orbitron',monospace;font-size:clamp(28px,7vw,48px);font-weight:900;margin-bottom:6px">E-RANK</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,245,255,0.4);letter-spacing:3px;margin-bottom:20px">SHADOW MONARCH PROTOCOL ACTIVE</div>
+        <div class="proc-bar-wrap">
+          <div class="proc-bar-fill" id="processBarFill"></div>
+        </div>
+        <div class="proc-log-box" id="procLog"></div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,245,255,0.25);margin-top:14px;letter-spacing:2px">DO NOT RETREAT — THE SHADOWS ADVANCE</div>
+      </div>
+    </div>
+
+    <div class="grid-2" style="margin-bottom:16px">
+      <div class="panel">
+        <div class="panel-title">⬡ ACTIVE GATE</div>
+        <div class="dungeon-gate-display">
+          <div class="gate-rank-ring">
+            <div class="gate-rank-letter" id="gateRankDisplay">E</div>
+          </div>
+          <div id="gateTypeDisplay" style="font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:3px;margin-bottom:6px;color:rgba(0,245,255,0.5)">STANDARD GATE</div>
+          <div class="gate-status ready" id="gateStatus">GATE READY</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,245,255,0.4);letter-spacing:2px;margin:6px 0">
+            DIFFICULTY: <span id="gateDiffDisplay" style="color:var(--gold)">★</span>
+          </div>
+          <div class="dungeon-rewards-preview" id="dungeonRewardsPreview">
+            <div class="dungeon-reward-tag">⚔ XP: <span id="gateXPReward">50</span></div>
+            <div class="dungeon-reward-tag">💰 GOLD: <span id="gateGoldReward">100</span></div>
+          </div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,245,255,0.25);margin:10px 0 6px;letter-spacing:2px">ENEMIES INSIDE:</div>
+          <div id="gateMonstersDisplay" style="display:flex;flex-direction:column;gap:3px;margin-bottom:14px;text-align:left"></div>
+          <!-- Processing bar (shows during entry) -->
+          <div class="proc-bar-wrap" style="margin-bottom:16px">
+            <div class="proc-bar-fill" id="processBarFill" style="width:0%"></div>
+          </div>
+          <button class="dungeon-btn" id="dungeonEnterBtn" onclick="enterDungeon()">⬡ ENTER DUNGEON</button>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,245,255,0.2);margin-top:8px;letter-spacing:2px">SHADOW BUFFS APPLY FROM DEPLOYED ARMY</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">DUNGEON LOG</div>
+        <div class="dungeon-log" id="dungeonLog">
+          <span class="dungeon-log-entry" style="color:rgba(0,245,255,0.3)">// AWAITING DUNGEON ENTRY...</span>
+        </div>
+        <div style="margin-top:14px;">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);color:rgba(0,245,255,0.35);line-height:2.5">
+            <div><span style="color:#aaa">E GATE</span> → +50 XP +100G · 30s PROCESS · 30s CD</div>
+            <div><span style="color:#4488ff">D GATE</span> → +120 XP +250G · 7s PROCESS · 1m CD</div>
+            <div><span style="color:#44ff88">C GATE</span> → +250 XP +500G · 11s PROCESS · 2m CD</div>
+            <div><span style="color:#ff8800">B GATE</span> → +450 XP +900G · 16s PROCESS · 4m CD</div>
+            <div><span style="color:#ff44ff">A GATE</span> → +750 XP +1500G · 22s PROCESS · 8m CD</div>
+            <div><span style="color:#ffd700">S GATE</span> → +1500 XP +3000G · 30s PROCESS · 15m CD</div>
+            <div style="color:var(--red);margin-top:8px">★ BOSS GATE = 2× REWARDS</div>
+            <div style="color:rgba(0,245,255,0.35)">⚔ DEPLOY SHADOWS FOR UP TO +50% BONUS</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHADOW ARMY -->
+  <div class="page" id="page-shadow">
+    <div class="page-header">
+      <div class="page-header-title">SHADOW ARMY</div>
+      <div class="page-header-sub">ARISE — THOSE WHO SERVE THE SHADOW MONARCH</div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="shadow-header">
+        <div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,245,255,0.4)">SHADOWS UNLOCKED</div>
+          <div class="shadow-count" id="shadowCount">0</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,245,255,0.4)">TOTAL ARMY</div>
+          <div style="font-family:'Orbitron',monospace;font-size:clamp(18px,4vw,26px);font-weight:900;color:rgba(0,245,255,0.5)" id="shadowTotalCount">0</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,245,255,0.4)">ARMY POWER</div>
+          <div style="font-family:'Orbitron',monospace;font-size:clamp(14px,3vw,20px);font-weight:700;color:var(--gold)" id="shadowArmyPower">0</div>
+        </div>
+        <div style="margin-left:auto;font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);color:rgba(0,245,255,0.4)">
+          DEPLOYED: <span id="shadowDeployed" style="color:var(--red);font-family:'Orbitron',monospace">0</span>
+        </div>
+      </div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:rgba(0,245,255,0.25);letter-spacing:2px;margin-top:8px">
+        ☠ IGRIS · BERU · BELLION UNLOCK AT S-RANK (LVL 100+) &nbsp;·&nbsp; CLEAR DUNGEONS TO EXTRACT NEW SHADOWS &nbsp;·&nbsp; DEPLOY SHADOWS FOR DUNGEON BONUS
+      </div>
+    </div>
+    <div class="shadow-grid" id="shadowGrid"></div>
+  </div>
+
+  <!-- INVENTORY -->
+  <div class="page" id="page-inventory">
+    <div class="page-header">
+      <div class="page-header-title">INVENTORY</div>
+      <div class="page-header-sub">ITEMS, EQUIPMENT & HUNTER SHOP</div>
+    </div>
+    <div class="sys-tabs">
+      <div class="sys-tab active" onclick="switchInventoryTab('inventory')">INVENTORY</div>
+      <div class="sys-tab" onclick="switchInventoryTab('shop')">SHOP</div>
+    </div>
+    <div id="invPanel">
+      <div class="panel">
+        <div class="panel-title">STORAGE <span style="font-family:'Share Tech Mono',monospace;font-size:clamp(9px,2vw,11px);color:var(--gold);margin-left:10px" id="invGoldDisplay"></span></div>
+        <div class="inv-slots" id="invSlots"></div>
+      </div>
+    </div>
+    <div id="shopPanel" style="display:none">
+      <div class="shop-header">
+        <div class="shop-gold">💰 GOLD: <span id="shopGoldAmount">0</span></div>
+      </div>
+      <div class="shop-tabs">
+        <div class="shop-tab active" onclick="switchShopTab('weapons')">⚔️ WEAPONS</div>
+        <div class="shop-tab" onclick="switchShopTab('armor')">🛡️ ARMOR</div>
+        <div class="shop-tab" onclick="switchShopTab('accessories')">💍 ACCESSORIES</div>
+        <div class="shop-tab" onclick="switchShopTab('consumables')">🧪 CONSUMABLES</div>
+      </div>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+  </div>
+
+  <!-- STREAK -->
+  <div class="page" id="page-streak">
+    <div class="page-header">
+      <div class="page-header-title">STREAK TRACKER</div>
+      <div class="page-header-sub">CONSISTENCY IS THE SHADOW MONARCH'S POWER</div>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-title">LOGIN STREAK</div>
+        <div style="text-align:center;padding:clamp(12px,3vw,24px) 0">
+          <div style="font-family:'Orbitron',monospace;font-size:clamp(40px,12vw,72px);font-weight:900;color:var(--orange);text-shadow:0 0 25px var(--orange);" id="bigStreak">0</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,13px);color:rgba(0,245,255,0.4);margin-top:6px;letter-spacing:3px">CONSECUTIVE DAYS</div>
+        </div>
+        <div class="streak-days" id="streakDaysFull" style="justify-content:center"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">STREAK REWARDS</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,12px);line-height:2.8;color:rgba(0,245,255,0.55)">
+          <div>3 DAYS → +50 BONUS XP</div>
+          <div>7 DAYS → +150 BONUS XP + ITEM</div>
+          <div>14 DAYS → +300 BONUS XP + TITLE</div>
+          <div>30 DAYS → +600 BONUS XP + RARE ITEM</div>
+          <div>60 DAYS → +1000 BONUS XP + SKILL POINT</div>
+          <div>100 DAYS → +2000 BONUS XP + RANK SKIP</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="page" id="page-leaderboard">
+    <div class="page-header">
+      <div class="page-header-title">GLOBAL RANKINGS</div>
+      <div class="page-header-sub">THE STRONGEST HUNTERS</div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">TOP HUNTERS</div>
+      <div id="leaderboardList"></div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<div id="systemFooter">
+  &copy; 2026 SOLO LEVELING — AMEEN
+  <span>Secure Connection Active</span>
+</div>
+
+<audio id="levelUpSound" preload="auto"><source src="sounds/levelup.mp3" type="audio/mpeg"></audio>
+<audio id="clickSound" preload="auto"><source src="sounds/click.mp3" type="audio/mpeg"></audio>
+
+<!-- ── FIREBASE ── -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAPP2o5T7jl-9LGpVRKJripfMvdpuEEK50",
+  authDomain: "soulkart-a8200.firebaseapp.com",
+  projectId: "soulkart-a8200",
+  storageBucket: "soulkart-a8200.firebasestorage.app",
+  messagingSenderId: "715711006853",
+  appId: "1:715711006853:web:b0765bca24dd583426c1ec"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let player = null;
+let uid = null;
+let unsubscribe = null;
+
+// ── DUNGEON STATE ──
+const GATE_CONFIGS = {
+  E: { xp:50,  gold:100,  cooldown:30000,  processTime:4000,  difficulty:1,  bossChance:0.05, color:'#aaaaaa',
+    monsters:['Goblin Scout','Slime Cluster','Dungeon Rat','Stone Golem (Weak)'],
+    boss:'Dungeon Overseer' },
+  D: { xp:120, gold:250,  cooldown:60000,  processTime:7000,  difficulty:2,  bossChance:0.10, color:'#4488ff',
+    monsters:['Orc Warrior','Dark Elf Archer','Shadow Worm','Iron Golem'],
+    boss:'Dungeon Warlord' },
+  C: { xp:250, gold:500,  cooldown:120000, processTime:11000, difficulty:3,  bossChance:0.15, color:'#44ff88',
+    monsters:['Lizardman Elite','Bone Knight','Poison Drake','Rune Golem'],
+    boss:'Gate Guardian Mage' },
+  B: { xp:450, gold:900,  cooldown:240000, processTime:16000, difficulty:4,  bossChance:0.20, color:'#ff8800',
+    monsters:['Demon Soldier','Shadow Assassin','Thunder Wyvern','Death Knight'],
+    boss:'Demonic Commander' },
+  A: { xp:750, gold:1500, cooldown:480000, processTime:22000, difficulty:5,  bossChance:0.25, color:'#ff44ff',
+    monsters:['Monarch-Class Demon','Shadow Lord','Ancient Dragon Kin','Abyss Fiend'],
+    boss:'Ant King Fragment' },
+  S: { xp:1500,gold:3000, cooldown:900000, processTime:30000, difficulty:10, bossChance:0.40, color:'#ffd700',
+    monsters:['Shadow Monarch Remnant','Absolute Being Fragment','Dragon Monarch Kin','Demon King Elite'],
+    boss:'Antinium Monarch Clone' }
+};
+
+const dungeonState = {
+  gateRanks: ["E","D","C","B","A","S"],
+  currentGate: null,
+  cooldownEnd: 0,
+  processing: false,
+  processEnd: 0,
+  processInterval: null,
+
+  generateGate(playerLevel = 1) {
+    const rankOrder = ["E","D","C","B","A","S"];
+    const maxRankIdx = Math.min(Math.floor(playerLevel / 15), 5);
+    // Weight lower ranks more common, gate can be up to player's max rank
+    const weights = [5,4,3,2,1.5,1];
+    let pool = [];
+    for (let i = 0; i <= maxRankIdx; i++) {
+      for (let j = 0; j < weights[i]; j++) pool.push(rankOrder[i]);
+    }
+    const rank = pool[Math.floor(Math.random() * pool.length)];
+    const cfg = GATE_CONFIGS[rank];
+    const isBoss = Math.random() < cfg.bossChance;
+    this.currentGate = {
+      rank, isBoss,
+      xp: isBoss ? cfg.xp * 2 : cfg.xp,
+      gold: isBoss ? cfg.gold * 2 : cfg.gold,
+      processTime: cfg.processTime,
+      cooldown: cfg.cooldown,
+      difficulty: cfg.difficulty,
+      monsters: cfg.monsters,
+      boss: cfg.boss,
+      color: cfg.color
+    };
+    this.updateUI();
+  },
+
+  updateUI() {
+    const g = this.currentGate;
+    if (!g) return;
+    const el = document.getElementById('gateRankDisplay');
+    if (el) {
+      el.textContent = g.rank;
+      el.className = 'gate-rank-letter';
+      el.style.color = g.color;
+      el.style.textShadow = `0 0 30px ${g.color}`;
+      el.parentElement.style.borderColor = g.color;
+      el.parentElement.style.boxShadow = `0 0 40px ${g.color}44, inset 0 0 40px ${g.color}11`;
+    }
+    document.getElementById('gateXPReward').textContent = g.xp + (g.isBoss?' ★':'');
+    document.getElementById('gateGoldReward').textContent = g.gold + (g.isBoss?' ★':'');
+    const typeEl = document.getElementById('gateTypeDisplay');
+    if (typeEl) typeEl.textContent = g.isBoss ? '⚠ BOSS GATE' : 'STANDARD GATE';
+    if (typeEl) typeEl.style.color = g.isBoss ? 'var(--red)' : 'rgba(0,245,255,0.5)';
+    const diffEl = document.getElementById('gateDiffDisplay');
+    if (diffEl) diffEl.innerHTML = '★'.repeat(g.difficulty > 5 ? 5 : g.difficulty) + (g.difficulty > 5 ? '+' : '');
+    const monstersEl = document.getElementById('gateMonstersDisplay');
+    if (monstersEl) monstersEl.innerHTML = g.monsters.map(m=>`<div class="monster-tag">▸ ${m}</div>`).join('');
+  },
+
+  updateCooldown() {
+    const now = Date.now();
+    const statusEl = document.getElementById('gateStatus');
+    const btn = document.getElementById('dungeonEnterBtn');
+    const procBar = document.getElementById('processBarFill');
+
+    if (this.processing) {
+      const remaining = this.processEnd - now;
+      const total = this.currentGate?.processTime || 5000;
+      const pct = Math.max(0, Math.min(100, (1 - remaining/total)*100));
+      if (procBar) procBar.style.width = pct + '%';
+      if (remaining <= 0) {
+        this.processing = false;
+        this._completeEntry();
+        return;
+      }
+      const s = Math.ceil(remaining / 1000);
+      if (statusEl) { statusEl.textContent = `PROCESSING... ${s}s`; statusEl.className = 'gate-status cooldown'; }
+      if (btn) btn.disabled = true;
+      return;
+    }
+
+    if (procBar) procBar.style.width = '0%';
+    const coolRemain = this.cooldownEnd - now;
+    if (coolRemain <= 0) {
+      if (statusEl) { statusEl.textContent = 'GATE READY'; statusEl.className = 'gate-status ready'; }
+      if (btn) btn.disabled = false;
+    } else {
+      const mins = Math.floor(coolRemain / 60000);
+      const secs = Math.ceil((coolRemain % 60000) / 1000);
+      const timeStr = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+      if (statusEl) { statusEl.textContent = `COOLDOWN: ${timeStr}`; statusEl.className = 'gate-status cooldown'; }
+      if (btn) btn.disabled = true;
+    }
+  },
+
+  _completeEntry: null // set below
+};
+setInterval(() => dungeonState.updateCooldown(), 500);
+
+// ── SHADOW ARMY DATA — ALL NAMED SHADOWS ──
+// S-RANK LOCKED: Beru, Bellion, Igris (require level 100 / S-rank)
+// Other named: unlock at lower levels
+// Infinite procedural shadows fill the army beyond the named ones
+
+const NAMED_SHADOWS = [
+  // ─── MONARCHS / MARSHAL ───
+  { id:"igris",    name:"IGRIS",     grade:"SHADOW KNIGHT",  type:"KNIGHT",  sRankLocked:true,
+    desc:"The Red Knight. Sung Jinwoo's first powerful named shadow. Loyal beyond death.",
+    stats:{STR:95,AGI:88,VIT:80,INT:40}, ability:"Ruler's Presence", abilityDesc:"Intimidates all nearby enemies reducing their ATK by 20%." },
+  { id:"beru",     name:"BERU",      grade:"MARSHAL",        type:"MARSHAL", sRankLocked:true,
+    desc:"Ant King Beru — the most powerful shadow. Has healing abilities and overwhelming raw strength.",
+    stats:{STR:99,AGI:97,INT:85,VIT:92}, ability:"Queen's Authority", abilityDesc:"Heals all shadows for 15% max HP. STR +30% for 10 turns." },
+  { id:"bellion",  name:"BELLION",   grade:"GRAND MARSHAL",  type:"MONARCH", sRankLocked:true,
+    desc:"Grand Marshal of the Shadow Army. Once served the Absolute Being. Absolute loyalty to the Shadow Monarch.",
+    stats:{STR:100,AGI:98,INT:95,VIT:99}, ability:"Shadow Domain", abilityDesc:"Extends Shadow Monarch's domain. All shadows gain +50% stats." },
+  // ─── GENERALS / NAMED ───
+  { id:"kaisel",   name:"KAISEL",    grade:"SHADOW DRAGON",  type:"GENERAL", sRankLocked:false, unlockLevel:40,
+    desc:"The Shadow Dragon — Jinwoo's aerial mount and powerful general.",
+    stats:{STR:96,AGI:99,VIT:85,INT:55}, ability:"Dragon's Flight", abilityDesc:"Aerial assault dealing 3x ATK to all enemies." },
+  { id:"tusk",     name:"TUSK",      grade:"SHADOW KNIGHT",  type:"KNIGHT",  sRankLocked:false, unlockLevel:25,
+    desc:"Tusk the Pigkind Sovereign's vessel. Loyal knight with massive defensive power.",
+    stats:{STR:88,AGI:70,VIT:90,INT:30}, ability:"Iron Tusk Charge", abilityDesc:"Charges through enemy formation, stunning all hit targets." },
+  { id:"tank",     name:"TANK",      grade:"ELITE SOLDIER",  type:"ELITE",   sRankLocked:false, unlockLevel:10,
+    desc:"The giant wolf shadow. Immense physical strength and undying endurance.",
+    stats:{STR:72,VIT:95,PER:70,AGI:55}, ability:"Pack Leader", abilityDesc:"Boosts all wolf-type shadows. Tanking bonus: absorbs 30% of damage." },
+  { id:"greed",    name:"GREED",     grade:"IRON BODY",      type:"MARSHAL", sRankLocked:false, unlockLevel:50,
+    desc:"Iron Body shadow with indestructible armor. Commander of defensive operations.",
+    stats:{VIT:99,STR:80,AGI:55,INT:45}, ability:"Iron Fortress", abilityDesc:"Becomes immovable. DEF +200%, reflects 20% damage to attacker." },
+  { id:"iron",     name:"IRON",      grade:"SHADOW SOLDIER", type:"ELITE",   sRankLocked:false, unlockLevel:8,
+    desc:"One of Jinwoo's early soldier shadows. Reliable frontline fighter.",
+    stats:{STR:65,VIT:70,AGI:60,INT:20}, ability:"Shield Wall", abilityDesc:"Forms defensive barrier with nearby soldiers, reducing damage by 25%." },
+  { id:"jima",     name:"JIMA",      grade:"SHADOW SOLDIER", type:"KNIGHT",  sRankLocked:false, unlockLevel:12,
+    desc:"A disciplined knight shadow extracted from a dungeon warden.",
+    stats:{STR:70,VIT:72,AGI:65,INT:25}, ability:"Sentinel Stance", abilityDesc:"Guards allied shadows, intercepting attacks directed at weaker units." },
+  { id:"sami",     name:"SAMI",      grade:"SHADOW BEAST",   type:"ELITE",   sRankLocked:false, unlockLevel:18,
+    desc:"A beast-class shadow with ferocious speed and tracking instincts.",
+    stats:{STR:68,AGI:90,VIT:55,INT:30}, ability:"Predator's Mark", abilityDesc:"Marks a target — all shadow attacks deal +40% damage to marked enemy." },
+  { id:"liu_zheng",name:"LIU ZHENG", grade:"SHADOW MAGE",    type:"ELITE",   sRankLocked:false, unlockLevel:30,
+    desc:"Extracted from a fallen Chinese hunter mage. Wields arcane shadow energy.",
+    stats:{INT:90,AGI:75,VIT:50,STR:40}, ability:"Shadow Arcane Bolt", abilityDesc:"Fires condensed shadow mana, ignoring 50% of enemy DEF." },
+  { id:"fangs",    name:"FANGS",     grade:"SHADOW BEAST",   type:"ELITE",   sRankLocked:false, unlockLevel:20,
+    desc:"A pack-beast shadow, runs in formation with Tank. Fast and ferocious.",
+    stats:{STR:75,AGI:88,VIT:60,INT:15}, ability:"Frenzy Bite", abilityDesc:"Multi-hit attack, striking the same target 5 times rapidly." },
+  { id:"shadow_hobgoblin",name:"GALE", grade:"GOBLIN GENERAL",type:"KNIGHT", sRankLocked:false, unlockLevel:5,
+    desc:"The first goblin shadow Jinwoo ever extracted. Veteran of countless battles.",
+    stats:{STR:50,AGI:75,VIT:45,INT:20}, ability:"Goblin Dash", abilityDesc:"Extreme speed burst, evades the next attack automatically." },
+  { id:"goto_ryuji_shadow",name:"RYUJI SHADOW",grade:"KNIGHT SHADOW",type:"KNIGHT",sRankLocked:false,unlockLevel:60,
+    desc:"Shadow extracted from the fallen Japanese S-Rank hunter Goto Ryuji.",
+    stats:{STR:92,AGI:90,VIT:85,INT:50}, ability:"Absolute Blade", abilityDesc:"Single-target devastation dealing 500% ATK damage." },
+  { id:"shadow_soldier_00",name:"BARUKA",grade:"SHADOW CHIEFTAIN",type:"GENERAL",sRankLocked:false,unlockLevel:35,
+    desc:"The Ice Elf Chief, now serving faithfully as a shadow general.",
+    stats:{INT:85,AGI:82,STR:70,VIT:65}, ability:"Frost Dominion", abilityDesc:"Freezes battlefield, slowing all enemies by 60% for 3 turns." },
+];
+
+// ─── INFINITE SHADOW GENERATOR ───
+const SHADOW_PREFIXES = [
+  "DARK","VOID","PHANTOM","ABYSSAL","ECLIPSE","UMBRAL","OBSIDIAN","NIGHT","SILENT","DEATH",
+  "GRIM","ANCIENT","CURSED","ETERNAL","HOLLOW","SHADOW","IRON","BLOOD","STORM","RUNE",
+  "VENOM","FROST","CHAOS","DIRE","FERAL","SAVAGE","ARCANE","SPECTRAL","DOOM","FALLEN"
+];
+const SHADOW_SUFFIXES = [
+  "BLADE","CLAW","FANG","KNIGHT","WARRIOR","STALKER","REAPER","HUNTER","GUARDIAN","STRIDER",
+  "BREAKER","SLAYER","WARDEN","PHANTOM","CRUSHER","BANE","SEEKER","RUNNER","STRIKE","EDGE"
+];
+const SHADOW_TYPES = ["KNIGHT","ELITE","GENERAL","MARSHAL","MONARCH"];
+const SHADOW_GRADES_BY_TYPE = {
+  KNIGHT: ["SHADOW SOLDIER","SHADOW GUARD","SHADOW KNIGHT","SHADOW VANGUARD"],
+  ELITE:  ["SHADOW ELITE","SHADOW ENFORCER","SHADOW COMMANDER"],
+  GENERAL:["SHADOW GENERAL","SHADOW WARLORD","SHADOW OVERLORD"],
+  MARSHAL:["SHADOW MARSHAL","SHADOW ARCHMARSHAL"],
+  MONARCH:["SHADOW SOVEREIGN"]
+};
+
+function generateShadowName(seed) {
+  const rng = (n) => { let h = seed * 9301 + 49297; h %= 233280; return (h + n * 1234567) % 1; };
+  const i1 = Math.floor(Math.abs(Math.sin(seed * 1.1)) * SHADOW_PREFIXES.length);
+  const i2 = Math.floor(Math.abs(Math.sin(seed * 2.3)) * SHADOW_SUFFIXES.length);
+  return SHADOW_PREFIXES[i1] + ' ' + SHADOW_SUFFIXES[i2];
+}
+
+function generateShadowType(seed, playerLevel) {
+  const r = Math.abs(Math.sin(seed * 7.7));
+  // Higher player level = higher chance of elite/general type
+  const boost = Math.min(playerLevel / 200, 1);
+  if (r > 0.98 - boost * 0.1) return "MONARCH";
+  if (r > 0.92 - boost * 0.1) return "MARSHAL";
+  if (r > 0.78 - boost * 0.1) return "GENERAL";
+  if (r > 0.55 - boost * 0.1) return "ELITE";
+  return "KNIGHT";
+}
+
+function generateShadowStats(type, seed, playerLevel) {
+  const base = { KNIGHT:50, ELITE:65, GENERAL:80, MARSHAL:90, MONARCH:97 }[type];
+  const levelBonus = Math.min(playerLevel * 0.3, 30);
+  const rnd = (o) => Math.min(100, Math.floor(base + levelBonus + Math.abs(Math.sin(seed + o)) * 20));
+  return { STR: rnd(1), AGI: rnd(2), VIT: rnd(3), INT: rnd(4) };
+}
+
+const SHADOW_ABILITIES = [
+  {name:"Shadow Slash",desc:"Deals 200% ATK shadow damage to a single target."},
+  {name:"Darkness Veil",desc:"Cloaks allied shadows, granting +30% evasion for 2 turns."},
+  {name:"Death's Embrace",desc:"Reduces target's max HP by 15% for 5 turns."},
+  {name:"Phantom Step",desc:"Teleports behind the target for a guaranteed critical strike."},
+  {name:"Shadow Bind",desc:"Roots the enemy in place for 3 turns with shadow chains."},
+  {name:"Void Pulse",desc:"AoE shadow wave dealing 150% ATK to all nearby enemies."},
+  {name:"Bone Armor",desc:"Generates a barrier absorbing up to 500 damage."},
+  {name:"Shadow Feast",desc:"Drains 20% of enemy HP, restoring own HP by the same amount."},
+  {name:"Eclipse Strike",desc:"Deals triple damage when attacking from shadows."},
+  {name:"Cursed Mark",desc:"Marks target — they take 50% more damage from all sources for 3 turns."},
+  {name:"Iron Shroud",desc:"Reduces all incoming damage by 40% for 2 turns."},
+  {name:"Spectral Charge",desc:"Charges through the battlefield dealing 300% ATK to everything in path."},
+  {name:"Doom Howl",desc:"Terrifies enemies, reducing their ATK and DEF by 25%."},
+  {name:"Abyss Rupture",desc:"Opens a dimensional rift dealing massive shadow AoE damage."},
+  {name:"Night's Will",desc:"Channels shadow energy, increasing all stats by 20% for 5 turns."},
+];
+
+function generateShadowAbility(seed) {
+  const idx = Math.floor(Math.abs(Math.sin(seed * 13.7)) * SHADOW_ABILITIES.length);
+  return SHADOW_ABILITIES[idx];
+}
+
+function generateProceduralShadow(index, playerLevel) {
+  const seed = index * 31337 + playerLevel * 1337;
+  const type = generateShadowType(seed, playerLevel);
+  const grades = SHADOW_GRADES_BY_TYPE[type];
+  const gradeIdx = Math.min(Math.floor(Math.abs(Math.sin(seed*3.3)) * grades.length), grades.length-1);
+  const ability = generateShadowAbility(seed);
+  return {
+    id: 'proc_' + index,
+    name: generateShadowName(seed),
+    grade: grades[gradeIdx],
+    type,
+    sRankLocked: false,
+    unlockLevel: 1,
+    procedural: true,
+    deployed: false,
+    desc: `A shadow extracted from a fallen ${type.toLowerCase()}-class entity. Serves the Shadow Monarch without question.`,
+    stats: generateShadowStats(type, seed, playerLevel),
+    ability: ability.name,
+    abilityDesc: ability.desc
+  };
+}
+
+// Build full shadow army: named + procedural based on dungeons completed
+function buildShadowArmy(player) {
+  const dungeonsCleared = player.dungeonsCleared || 0;
+  const level = player.level || 1;
+
+  // Named shadows with unlock logic
+  let shadows = NAMED_SHADOWS.map(s => ({...s, deployed: (player.deployedShadows||[]).includes(s.id)}));
+
+  // Procedural shadows: 1 per dungeon cleared (capped at 200 for performance)
+  const proceduralCount = Math.min(dungeonsCleared, 200);
+  for (let i = 0; i < proceduralCount; i++) {
+    const ps = generateProceduralShadow(i, level);
+    ps.deployed = (player.deployedShadows||[]).includes(ps.id);
+    shadows.push(ps);
+  }
+
+  return shadows;
+}
+
+// ── DEFAULTS ──
+function defaultPlayer(user) {
+  return {
+    name: user.displayName || "Hunter",
+    level: 1, rank: "E", xp: 0, xpMax: 100, totalXp: 0,
+    gold: 0, hp: 100, maxHp: 100, mp: 50, maxMp: 50,
+    stats: { strength: 10, agility: 10, intelligence: 10, vitality: 10, perception: 10, luck: 5 },
+    quests: { daily: {}, weekly: {}, special: {} },
+    inventory: [], achievements: [], skills: [],
+    streak: { login: 1, lastLogin: null }, statPoints: 0, totalSpent: 0,
+    deployedShadows: [], dungeonsCleared: 0
+  };
+}
+
+function xpForLevel(lvl) { return lvl * lvl * 100; }
+function rankForLevel(lvl) {
+  if (lvl >= 200) return "Monarch";
+  if (lvl >= 150) return "National";
+  if (lvl >= 100) return "S";
+  if (lvl >= 75) return "A";
+  if (lvl >= 50) return "B";
+  if (lvl >= 25) return "C";
+  if (lvl >= 10) return "D";
+  return "E";
+}
+function titleForLevel(lvl) {
+  if (lvl >= 200) return "Shadow Monarch";
+  if (lvl >= 150) return "National Level Hunter";
+  if (lvl >= 100) return "S-Rank Hunter";
+  if (lvl >= 75) return "A-Rank Hunter";
+  if (lvl >= 50) return "B-Rank Hunter";
+  if (lvl >= 25) return "C-Rank Hunter";
+  if (lvl >= 10) return "D-Rank Hunter";
+  if (lvl >= 5) return "Awakened Hunter";
+  return "Ordinary Human";
+}
+function derivedStats(p) {
+  const s = p.stats;
+  return {
+    hp: 100 + s.vitality * 10 + (p.level - 1) * 20,
+    mp: 50 + s.intelligence * 5 + (p.level - 1) * 10,
+    attack: s.strength * 2 + s.agility,
+    defense: s.vitality * 1.5 + s.strength * 0.5,
+    speed: s.agility * 3,
+    critChance: Math.min(s.luck * 0.5, 50)
+  };
+}
+
+const authTimeout = setTimeout(() => { window.location.href = "login.html"; }, 8000);
+
+onAuthStateChanged(auth, async (user) => {
+  clearTimeout(authTimeout);
+  if (!user) { window.location.href = "login.html"; return; }
+  uid = user.uid;
+  try { await loadPlayer(user); }
+  catch (err) {
+    console.error(err);
+    if (!player) { player = defaultPlayer(user); }
+    document.getElementById("loadingScreen").style.display = "none";
+    renderAll();
+  }
+});
+
+async function loadPlayer(user) {
+  updateLoadProgress(20, "LOADING HUNTER DATA...");
+  const ref = doc(db, "users", uid);
+  let snap;
+  try { snap = await getDoc(ref); }
+  catch (e) {
+    player = defaultPlayer(user);
+    updateLoadProgress(100, "OFFLINE MODE");
+    setTimeout(() => {
+      document.getElementById("loadingScreen").style.display = "none";
+      renderAll(); notify("OFFLINE MODE — DATA NOT SYNCED", "");
+    }, 500);
+    return;
+  }
+
+  // Admin check
+  try {
+    if (snap.exists() && snap.data().admin === true) {
+      document.getElementById("adminBtn").style.display = "inline-flex";
+    }
+  } catch (e) { console.warn(e); }
+
+  if (!snap.exists()) {
+    const def = defaultPlayer(user);
+    try { await setDoc(ref, def); snap = await getDoc(ref); } catch (e) { console.warn(e); }
+  }
+
+  player = (snap && snap.exists()) ? snap.data() : defaultPlayer(user);
+  player.name = player.name || user.displayName || "Hunter";
+
+  // Ensure all fields
+  if (!player.stats) player.stats = { strength: 10, agility: 10, intelligence: 10, vitality: 10, perception: 10, luck: 5 };
+  if (!player.quests) player.quests = { daily: {}, weekly: {}, special: {} };
+  if (!player.inventory) player.inventory = [];
+  if (!player.achievements) player.achievements = [];
+  if (!player.skills) player.skills = [];
+  if (!player.streak) player.streak = { login: 0, lastLogin: null };
+  if (player.gold == null) player.gold = 0;
+  if (player.statPoints == null) player.statPoints = 0;
+  if (!player.xpMax) player.xpMax = xpForLevel(player.level || 1);
+  if (!player.totalXp) player.totalXp = 0;
+  if (player.xp == null) player.xp = 0;
+  if (!player.rank) player.rank = "E";
+  if (!player.level) player.level = 1;
+  if (!player.deployedShadows) player.deployedShadows = [];
+  if (player.dungeonsCleared == null) player.dungeonsCleared = 0;
+
+  const derived = derivedStats(player);
+  player.hpMax = derived.hp; player.mpMax = derived.mp;
+  if (!player.hp || player.hp > player.hpMax) player.hp = player.hpMax;
+  if (!player.mp || player.mp > player.mpMax) player.mp = player.mpMax;
+
+  try { await checkLoginStreak(); } catch (e) { console.warn(e); }
+  try { await checkQuestReset(); } catch (e) { console.warn(e); }
+
+  updateLoadProgress(70, "SYNCING CLOUD DATA...");
+
+  try {
+    if (unsubscribe) unsubscribe();
+    unsubscribe = onSnapshot(ref, (s) => {
+      if (s.exists()) {
+        const newData = s.data();
+        if (newData.level > (player.level || 1)) showLevelUp(newData.level);
+        player = { ...player, ...newData };
+        renderAll();
+      }
+    });
+  } catch (e) { console.warn(e); }
+
+  updateLoadProgress(100, "SYSTEM READY");
+  dungeonState.generateGate(player.level);
+
+  setTimeout(() => {
+    document.getElementById("loadingScreen").style.display = "none";
+    renderAll();
+    checkAchievements();
+    notify("SYSTEM LOADED — WELCOME BACK, " + (player.name || "HUNTER").toUpperCase(), "green");
+    // Show daily quest reminder on first load
+    const today = new Date().toDateString();
+    const alertShown = sessionStorage.getItem("alertShown_" + today);
+    if (!alertShown) {
+      setTimeout(() => {
+        document.getElementById("systemAlertOverlay").classList.add("show");
+        sessionStorage.setItem("alertShown_" + today, "1");
+      }, 1200);
+    }
+  }, 600);
+}
+
+function updateLoadProgress(pct, text) {
+  const fill = document.getElementById("loadFill");
+  const status = document.getElementById("loadStatus");
+  if (fill) fill.style.width = pct + "%";
+  if (status) status.textContent = text;
+}
+
+window.closeSystemAlert = function() {
+  document.getElementById("systemAlertOverlay").classList.remove("show");
+};
+
+async function checkLoginStreak() {
+  const today = new Date().toDateString();
+  const last = player.streak?.lastLogin;
+  if (last === today) return;
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  const loginStreak = last === yesterday ? (player.streak.login || 0) + 1 : 1;
+  player.streak = { login: loginStreak, lastLogin: today };
+  if (loginStreak === 3) { player.xp += 50; player.totalXp += 50; notify("3-DAY STREAK! +50 XP", "gold"); }
+  if (loginStreak === 7) { player.xp += 150; player.totalXp += 150; player.gold += 100; notify("7-DAY STREAK! +150 XP +100 GOLD", "gold"); }
+  if (loginStreak === 30) { player.xp += 600; player.totalXp += 600; notify("30-DAY STREAK! +600 XP!", "gold"); }
+  await savePlayer();
+}
+
+async function checkQuestReset() {
+  const today = new Date().toDateString();
+  if (player.questResetDate !== today) {
+    player.quests = { daily: {}, weekly: player.quests?.weekly || {}, special: player.quests?.special || {} };
+    player.questResetDate = today;
+    await savePlayer();
+  }
+}
+
+async function savePlayer() {
+  if (!uid) return;
+  try {
+    const ref = doc(db, "users", uid);
+    const data = { ...player };
+    delete data.createdAt;
+    await updateDoc(ref, data);
+  } catch (e) { console.error(e); }
+}
+
+async function addXP(amount) {
+  player.xp += amount;
+  player.totalXp += amount;
+  while (player.xp >= player.xpMax) {
+    player.xp -= player.xpMax;
+    player.level++;
+    player.xpMax = xpForLevel(player.level);
+    player.rank = rankForLevel(player.level);
+    player.title = titleForLevel(player.level);
+    player.statPoints = (player.statPoints || 0) + 3;
+    player.gold += player.level * 10;
+    const d = derivedStats(player);
+    player.hpMax = d.hp; player.hp = d.hp;
+    player.mpMax = d.mp; player.mp = d.mp;
+    showLevelUp(player.level);
+    playSound('levelUp');
+  }
+  await savePlayer();
+  renderAll();
+  checkAchievements();
+}
+
+function showLevelUp(level) {
+  const overlay = document.getElementById("levelUpOverlay");
+  document.getElementById("levelUpNum").textContent = "LEVEL " + level;
+  document.getElementById("levelUpReward").textContent = "+3 STAT POINTS · +" + (level * 10) + " GOLD AWARDED";
+  overlay.classList.add('show');
+}
+
+window.closeLevelUp = function() {
+  document.getElementById("levelUpOverlay").classList.remove('show');
+};
+
+function notify(msg, type = "") {
+  const container = document.getElementById("notification");
+  const el = document.createElement("div");
+  el.className = "notif " + type;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+}
+
+function playSound(type) {
+  try {
+    if (type === 'levelUp') {
+      const s = document.getElementById('levelUpSound');
+      if (s) { s.currentTime = 0; s.play().catch(() => {}); }
+    } else {
+      const s = document.getElementById('clickSound');
+      if (s) { s.currentTime = 0; s.play().catch(() => {}); }
+    }
+  } catch (e) {}
+}
+
+function renderAll() {
+  if (!player) return;
+  renderTopbar();
+  renderDashboard();
+  renderStats();
+  renderQuestBadge();
+  renderStreakDays();
+  renderInventory();
+  renderSkills();
+  renderAchievements();
+  renderShadowArmy();
+}
+
+function renderTopbar() {
+  const name = player.name || "Hunter";
+  const avatar = document.getElementById("avatarIcon");
+  const savedPic = localStorage.getItem("profilePic");
+  if (avatar) {
+    if (savedPic) {
+      avatar.style.backgroundImage = `url(${savedPic})`;
+      avatar.style.backgroundSize = "cover";
+      avatar.style.backgroundPosition = "center";
+      avatar.textContent = "";
+    } else {
+      avatar.style.backgroundImage = "";
+      avatar.textContent = name[0].toUpperCase();
+    }
+  }
+  document.getElementById("topName").textContent = name.toUpperCase();
+  document.getElementById("topLevel").textContent = player.level;
+  document.getElementById("topRankBadge").textContent = "RANK " + (player.rank || "E") + " HUNTER";
+  const rankColors = { E:"#999",D:"#4488ff",C:"#44ff88",B:"#ff8800",A:"#ff44ff",S:"#ffd700",National:"#00f5ff",Monarch:"#fff" };
+  document.getElementById("topRankBadge").style.color = rankColors[player.rank] || "#999";
+  const pct = Math.min((player.xp / player.xpMax) * 100, 100);
+  document.getElementById("topXPFill").style.width = pct + "%";
+  document.getElementById("topXPLabel").textContent = player.xp + "/" + player.xpMax;
+}
+
+function renderDashboard() {
+  if (!player) return;
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "GOOD MORNING" : hour < 18 ? "GOOD AFTERNOON" : "GOOD EVENING";
+  document.getElementById("dashGreeting").textContent = greeting + ", " + (player.name || "HUNTER").toUpperCase();
+  document.getElementById("dashLevel").textContent = player.level;
+  document.getElementById("dashRank").textContent = "RANK " + player.rank;
+  document.getElementById("dashTotalXP").textContent = player.totalXp || 0;
+  document.getElementById("dashGold").textContent = player.gold || 0;
+  document.getElementById("dashStreak").textContent = player.streak?.login || 0;
+  document.getElementById("streakNum").textContent = player.streak?.login || 0;
+  document.getElementById("bigStreak").textContent = player.streak?.login || 0;
+  document.getElementById("dashTitle").textContent = (player.title || titleForLevel(player.level)).toUpperCase();
+
+  const rankEl = document.getElementById("dashRankDisplay");
+  rankEl.textContent = player.rank;
+  rankEl.className = "rank-display rank-" + player.rank;
+
+  const pct = Math.min((player.xp / player.xpMax) * 100, 100);
+  document.getElementById("xpFillDash").style.width = pct + "%";
+  document.getElementById("xpLabelDash").textContent = player.xp + " / " + player.xpMax;
+
+  const hpPct = Math.min((player.hp / player.hpMax) * 100, 100);
+  document.getElementById("hpFill").style.width = hpPct + "%";
+  document.getElementById("hpLabel").textContent = player.hp + "/" + player.hpMax;
+
+  const mpPct = Math.min((player.mp / player.mpMax) * 100, 100);
+  document.getElementById("mpFill").style.width = mpPct + "%";
+  document.getElementById("mpLabel").textContent = player.mp + "/" + player.mpMax;
+
+  const dailyQuestDefs = getDailyQuestDefs();
+  document.getElementById("dashQuestList").innerHTML = dailyQuestDefs.slice(0, 4).map(q => {
+    const done = player.quests?.daily?.[q.id];
+    return `<div class="quest-item ${done?'completed':''}" onclick="toggleQuestDash('${q.id}')">
+      <div class="quest-checkbox">${done?'✓':''}</div>
+      <div class="quest-info"><div class="quest-name">${q.name}</div></div>
+      <div class="quest-reward">+${q.xp} XP</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById("dashStatsPreview").innerHTML = Object.entries(player.stats).map(([k,v]) =>
+    `<div class="core-stat"><span class="core-stat-name">${k.toUpperCase()}</span><span class="core-stat-val">${v}</span></div>`
+  ).join('');
+
+  const unlockedAchs = getAchievements().filter(a => player.achievements.includes(a.id)).slice(-3).reverse();
+  document.getElementById("dashAchievements").innerHTML = unlockedAchs.length > 0
+    ? unlockedAchs.map(a => `<div style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid rgba(255,215,0,0.18);background:rgba(255,215,0,0.03);clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px))">
+        <span style="font-size:18px">${a.icon}</span>
+        <div><div style="font-family:'Share Tech Mono',monospace;font-size:clamp(10px,2.5vw,11px);color:var(--gold)">${a.name}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:clamp(8px,2vw,9px);color:rgba(255,215,0,0.4)">${a.desc}</div></div>
+      </div>`).join('')
+    : '<div style="font-family:Share Tech Mono,monospace;font-size:11px;color:rgba(0,245,255,0.25);text-align:center;padding:20px">COMPLETE QUESTS TO UNLOCK</div>';
+}
+
+window.toggleQuestDash = function(id) {
+  if (!player.quests.daily[id]) {
+    const q = getDailyQuestDefs().find(x => x.id === id);
+    if (q) {
+      player.quests.daily[id] = true;
+      addXP(q.xp);
+      player.gold += q.gold || 10;
+      notify("QUEST COMPLETE — +" + q.xp + " XP +" + (q.gold || 10) + " GOLD", "green");
+      savePlayer();
+      renderAll();
+    }
+  }
+};
+
+function renderStats() {
+  const primaryKeys = ["strength","agility","intelligence","vitality","perception","luck"];
+  const icons = { strength:"STR",agility:"AGI",intelligence:"INT",vitality:"VIT",perception:"PER",luck:"LCK" };
+  const sp = player.statPoints || 0;
+  document.getElementById("statPointsDisplay").textContent = "AVAILABLE STAT POINTS: " + sp;
+  document.getElementById("primaryStatsDisplay").innerHTML = primaryKeys.map(k =>
+    `<div class="core-stat"><span class="core-stat-name">${icons[k]} ${k.toUpperCase()}</span>
+      <div style="display:flex;align-items:center">
+        <span class="core-stat-val">${player.stats[k]}</span>
+        <button class="stat-plus-btn" onclick="spendStat('${k}')" ${sp<=0?'disabled':''}>+</button>
+      </div>
+    </div>`
+  ).join('');
+  const d = derivedStats(player);
+  document.getElementById("derivedStatsDisplay").innerHTML = [
+    ["HP",Math.floor(d.hp)],["MP",Math.floor(d.mp)],
+    ["ATTACK",Math.floor(d.attack)],["DEFENSE",Math.floor(d.defense)],
+    ["SPEED",Math.floor(d.speed)],["CRIT%",Math.floor(d.critChance)+"%"]
+  ].map(([k,v]) => `<div class="core-stat"><span class="core-stat-name">${k}</span><span class="core-stat-val">${v}</span></div>`).join('');
+}
+
+window.spendStat = async function(stat) {
+  if ((player.statPoints || 0) <= 0) return;
+  player.stats[stat]++;
+  player.statPoints--;
+  const d = derivedStats(player);
+  player.hpMax = d.hp; player.mpMax = d.mp;
+  if (player.hp > player.hpMax) player.hp = player.hpMax;
+  if (player.mp > player.mpMax) player.mp = player.mpMax;
+  await savePlayer(); renderAll();
+  notify(stat.toUpperCase() + " INCREASED!", "green");
+  playSound('click');
+};
+
+function getDailyQuestDefs() {
+  return [
+    { id:"exercise",   name:"100 Pushups",      desc:"Build physical strength",      xp:80,  gold:20, icon:"⚔️" },
+    { id:"study",      name:"100 Situps",        desc:"Core stability training",       xp:100, gold:25, icon:"🔥" },
+    { id:"coding",     name:"100 Squats",        desc:"Leg strength conditioning",     xp:120, gold:30, icon:"⚡" },
+    { id:"meditation", name:"10KM Run",          desc:"Endurance & stamina training",  xp:60,  gold:15, icon:"🏃" },
+    { id:"hydration",  name:"Stay Hydrated",     desc:"Drink 2L of water",            xp:40,  gold:10, icon:"💧" },
+    { id:"reading",    name:"Skill Practice",    desc:"Train your chosen skill",       xp:70,  gold:18, icon:"📜" },
+  ];
+}
+function getWeeklyQuestDefs() {
+  return [
+    { id:"fitness_goal",  name:"Fitness Goal",       desc:"Complete 5 exercise sessions",   xp:300, gold:80,  icon:"🛡️" },
+    { id:"skill_learn",   name:"Learn New Skill",     desc:"Study a new topic for 5 hours",  xp:400, gold:100, icon:"📖" },
+    { id:"productivity",  name:"Productivity Target", desc:"Complete daily quests 5 days",   xp:500, gold:120, icon:"⭐" },
+  ];
+}
+function getSpecialQuestDefs() {
+  return [
+    { id:"first_level",  name:"First Awakening",  desc:"Reach Level 5",                xp:500,  gold:200,  icon:"👁️", req:()=>player.level>=5 },
+    { id:"boss_dungeon", name:"Boss Dungeon",      desc:"Maintain 7-day login streak",  xp:1000, gold:500,  icon:"💀", req:()=>(player.streak?.login||0)>=7 },
+    { id:"dedication",   name:"True Dedication",  desc:"Reach Level 25",               xp:2000, gold:1000, icon:"👑", req:()=>player.level>=25 },
+  ];
+}
+
+let questTab = 'daily';
+window.switchQuestTab = function(tab) {
+  questTab = tab;
+  document.querySelectorAll('.sys-tab').forEach((el,i) => {
+    el.classList.toggle('active',['daily','weekly','special'][i]===tab);
+  });
+  renderQuestPage();
+};
+
+function renderQuestBadge() {
+  const daily = getDailyQuestDefs();
+  const incomplete = daily.filter(q => !player.quests?.daily?.[q.id]).length;
+  const badge = document.getElementById("questBadge");
+  badge.textContent = incomplete;
+  badge.style.display = incomplete > 0 ? 'block' : 'none';
+}
+
+function renderQuestPage() {
+  let defs;
+  if (questTab==='daily') defs = getDailyQuestDefs();
+  else if (questTab==='weekly') defs = getWeeklyQuestDefs();
+  else defs = getSpecialQuestDefs();
+  const category = questTab;
+  document.getElementById("questPageContent").innerHTML = defs.map(q => {
+    const done = player.quests?.[category]?.[q.id];
+    const isSpecial = category==='special';
+    const reqMet = !isSpecial || q.req?.();
+    return `<div class="quest-item ${done?'completed':''}" onclick="completeQuest('${category}','${q.id}',${q.xp},${q.gold||10})">
+      <div style="font-size:clamp(18px,4vw,24px);flex-shrink:0">${q.icon}</div>
+      <div class="quest-checkbox">${done?'✓':''}</div>
+      <div class="quest-info">
+        <div class="quest-name">${q.name}</div>
+        <div class="quest-desc">${q.desc}</div>
+        ${isSpecial&&!reqMet&&!done?'<div style="font-family:Share Tech Mono,monospace;font-size:10px;color:var(--red)">REQUIREMENTS NOT MET</div>':''}
+      </div>
+      <div class="quest-reward">+${q.xp} XP<br><span style="color:var(--gold)">+${q.gold||10}G</span></div>
+    </div>`;
+  }).join('');
+}
+
+window.completeQuest = async function(category, id, xp, gold) {
+  if (player.quests?.[category]?.[id]) return;
+  if (category==='special') {
+    const q = getSpecialQuestDefs().find(x=>x.id===id);
+    if (q && !q.req?.()) { notify("REQUIREMENTS NOT MET",""); return; }
+  }
+  if (!player.quests[category]) player.quests[category] = {};
+  player.quests[category][id] = true;
+  player.gold += gold||10;
+  await addXP(xp);
+  notify("QUEST COMPLETE — +" + xp + " XP +" + (gold||10) + " GOLD", "green");
+  playSound('click');
+  renderQuestPage(); renderQuestBadge();
+};
+
+// ── DUNGEON ENTRY WITH PROCESSING PERIOD ──
+dungeonState._completeEntry = async function() {
+  const gate = dungeonState.currentGate;
+  if (!gate) return;
+
+  // Shadow army buff
+  const shadows = buildShadowArmy(player);
+  const deployedCount = shadows.filter(s=>s.deployed && isUnlocked(s, player)).length;
+  const shadowBonus = 1 + deployedCount * 0.05; // 5% bonus per deployed shadow
+
+  const finalXP   = Math.floor(gate.xp   * shadowBonus);
+  const finalGold = Math.floor(gate.gold  * shadowBonus);
+
+  // Track dungeons cleared
+  player.dungeonsCleared = (player.dungeonsCleared || 0) + 1;
+  // Chance to generate a new procedural shadow
+  // 1 new shadow per cleared dungeon (up to 200)
+  // This is already handled by buildShadowArmy using dungeonsCleared
+
+  await addXP(finalXP);
+  player.gold += finalGold;
+
+  // Hide processing UI
+  const procOverlay = document.getElementById('dungeonProcessOverlay');
+  if (procOverlay) { procOverlay.classList.remove('show'); }
+
+  const bonusText = deployedCount > 0 ? ` (+${Math.floor((shadowBonus-1)*100)}% SHADOW BONUS)` : '';
+
+  const log = document.getElementById('dungeonLog');
+  if (log) {
+    const entry = document.createElement('span');
+    entry.className = 'dungeon-log-entry success';
+    const bossTag = gate.isBoss ? ' [BOSS CLEAR]' : '';
+    entry.textContent = `[${new Date().toLocaleTimeString()}] ${gate.rank}-RANK GATE CLEARED${bossTag} — +${finalXP}XP +${finalGold}G${bonusText}`;
+    log.insertBefore(entry, log.firstChild);
+  }
+
+  if (gate.isBoss) notify(`⚠ BOSS DEFEATED: ${gate.boss} — +${finalXP} XP +${finalGold} GOLD`, "gold");
+  else notify(`${gate.rank}-RANK DUNGEON CLEARED — +${finalXP} XP +${finalGold} GOLD${bonusText}`, "green");
+
+  dungeonState.cooldownEnd = Date.now() + gate.cooldown;
+  await savePlayer();
+  renderAll();
+
+  // New shadow notification
+  if (player.dungeonsCleared <= 200) {
+    const newShadow = generateProceduralShadow(player.dungeonsCleared - 1, player.level);
+    setTimeout(() => notify(`NEW SHADOW EXTRACTED: ${newShadow.name} [${newShadow.grade}]`, ""), 1200);
+  }
+
+  setTimeout(() => { dungeonState.generateGate(player.level); }, 3000);
+};
+
+window.enterDungeon = async function() {
+  if (!dungeonState.currentGate || Date.now() < dungeonState.cooldownEnd || dungeonState.processing) return;
+
+  dungeonState.processing = true;
+  dungeonState.processEnd = Date.now() + dungeonState.currentGate.processTime;
+
+  // Show processing overlay
+  const procOverlay = document.getElementById('dungeonProcessOverlay');
+  const gate = dungeonState.currentGate;
+  if (procOverlay) {
+    document.getElementById('procGateRank').textContent = gate.rank + '-RANK';
+    document.getElementById('procGateRank').style.color = gate.color;
+    const procLog = document.getElementById('procLog');
+    procLog.innerHTML = '';
+
+    // Staggered combat log entries based on difficulty
+    const messages = [
+      `> ENTERING ${gate.rank}-RANK GATE...`,
+      `> GATE DETECTED: ${gate.isBoss ? '⚠ BOSS GATE — ' + gate.boss : 'STANDARD DUNGEON'}`,
+      `> SHADOW ARMY STATUS: ${buildShadowArmy(player).filter(s=>s.deployed&&isUnlocked(s,player)).length} DEPLOYED`,
+      ...gate.monsters.map(m => `> ENGAGING: ${m}`),
+      gate.isBoss ? `> ⚠ BOSS APPEARED: ${gate.boss}` : `> DUNGEON BOSS CHAMBER REACHED`,
+      gate.isBoss ? `> SHADOW MONARCH AUTHORITY — ARISE!` : `> ARISE! SHADOWS — ELIMINATE ALL TARGETS`,
+      `> EXTRACTION IN PROGRESS...`,
+      `> GATE CLEARED — RETURNING TO SURFACE`
+    ];
+
+    const interval = gate.processTime / (messages.length + 1);
+    messages.forEach((msg, i) => {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'proc-log-entry' + (msg.includes('⚠') ? ' warn' : '');
+        el.textContent = msg;
+        procLog.appendChild(el);
+        procLog.scrollTop = procLog.scrollHeight;
+      }, interval * (i + 1));
+    });
+
+    procOverlay.classList.add('show');
+  }
+
+  playSound('click');
+};
+
+// ── SHADOW ARMY ──
+function isUnlocked(s, player) {
+  if (s.sRankLocked) return (player.rank === 'S' || player.rank === 'National' || player.rank === 'Monarch');
+  return (player.level || 1) >= (s.unlockLevel || 1);
+}
+
+function renderShadowArmy() {
+  const grid = document.getElementById('shadowGrid');
+  if (!grid) return;
+
+  const shadows = buildShadowArmy(player);
+  const unlocked = shadows.filter(s => isUnlocked(s, player));
+  const deployed = shadows.filter(s => s.deployed && isUnlocked(s, player));
+
+  const countEl = document.getElementById('shadowCount');
+  const depEl   = document.getElementById('shadowDeployed');
+  const totalEl = document.getElementById('shadowTotalCount');
+  const pwr     = document.getElementById('shadowArmyPower');
+
+  if (countEl) countEl.textContent = unlocked.length;
+  if (depEl)   depEl.textContent   = deployed.length;
+  if (totalEl) totalEl.textContent = shadows.length;
+
+  // Army power = sum of all deployed shadow stats
+  const power = deployed.reduce((acc, s) => acc + Object.values(s.stats).reduce((a,b)=>a+b,0), 0);
+  if (pwr) pwr.textContent = power.toLocaleString();
+
+  grid.innerHTML = shadows.map(s => {
+    const unlk = isUnlocked(s, player);
+
+    if (!unlk) {
+      const lockMsg = s.sRankLocked
+        ? 'LOCKED — REACH S-RANK'
+        : `LOCKED — REACH LVL ${s.unlockLevel}`;
+      return `<div class="shadow-card locked-shadow">
+        <div style="font-size:24px;text-align:center;opacity:0.2;margin-bottom:8px">☠</div>
+        <div class="shadow-name" style="color:#333;font-size:11px">${s.name}</div>
+        <div class="shadow-grade" style="color:#222">${s.grade}</div>
+        ${s.sRankLocked ? '<div style="font-family:Share Tech Mono,monospace;font-size:8px;color:#ff444455;letter-spacing:2px;margin-top:4px">★ S-RANK EXCLUSIVE</div>' : ''}
+        <div class="locked-msg">${lockMsg}</div>
+      </div>`;
+    }
+
+    const statsHtml = Object.entries(s.stats).map(([k,v]) =>
+      `<div class="shadow-stat-tag">${k}:${v}</div>`).join('');
+
+    const typeColor = {
+      KNIGHT:'#88aaff', ELITE:'var(--purple)', GENERAL:'var(--gold)',
+      MARSHAL:'var(--cyan)', MONARCH:'#fff'
+    }[s.type] || 'var(--cyan)';
+
+    const cardBorder = s.sRankLocked ? 'border-color:rgba(255,215,0,0.4);' : '';
+    const proceduralTag = s.procedural ? `<div style="font-family:Share Tech Mono,monospace;font-size:7px;letter-spacing:2px;color:rgba(0,245,255,0.2);margin-bottom:4px">AUTO-EXTRACTED</div>` : '';
+
+    return `<div class="shadow-card shadow-type-${s.type} ${s.deployed?'deployed':''}" id="shadow-${s.id}" style="${cardBorder}">
+      ${s.sRankLocked ? '<div style="font-family:Share Tech Mono,monospace;font-size:8px;color:var(--gold);letter-spacing:2px;margin-bottom:6px">★ S-RANK SHADOW</div>' : ''}
+      ${proceduralTag}
+      <div class="shadow-name" style="color:${typeColor};text-shadow:0 0 10px ${typeColor}">${s.name}</div>
+      <div class="shadow-grade">[${s.grade}]</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:rgba(0,245,255,0.3);margin-bottom:8px;line-height:1.5">${s.desc}</div>
+      <div class="shadow-stats">${statsHtml}</div>
+      ${s.ability ? `<div style="font-family:'Share Tech Mono',monospace;font-size:8px;margin-top:6px;padding:5px 8px;border:1px solid rgba(0,245,255,0.1);background:rgba(0,245,255,0.02)">
+        <span style="color:var(--gold)">ABILITY:</span> ${s.ability}<br>
+        <span style="color:rgba(0,245,255,0.35)">${s.abilityDesc}</span>
+      </div>` : ''}
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;color:${s.deployed?'var(--red)':'var(--green)'};margin:8px 0">
+        ${s.deployed ? '⚡ DEPLOYED' : '◈ STANDBY'}
+      </div>
+      <button class="shadow-deploy-btn" onclick="deployShadow('${s.id}')">${s.deployed?'RECALL':'DEPLOY'}</button>
+    </div>`;
+  }).join('');
+}
+
+window.deployShadow = function(id) {
+  if (!player.deployedShadows) player.deployedShadows = [];
+  const shadows = buildShadowArmy(player);
+  const s = shadows.find(x => x.id === id);
+  if (!s || !isUnlocked(s, player)) return;
+
+  const idx = player.deployedShadows.indexOf(id);
+  if (idx > -1) {
+    player.deployedShadows.splice(idx, 1);
+    notify("SHADOW RECALLED: " + s.name, "green");
+  } else {
+    player.deployedShadows.push(id);
+    notify("SHADOW DEPLOYED: " + s.name, "red");
+  }
+  savePlayer();
+  playSound('click');
+  renderShadowArmy();
+};
+
+// ── ACHIEVEMENTS ──
+function getAchievements() {
+  return [
+    {id:"first_login",name:"FIRST STEP",icon:"👣",desc:"Login for the first time"},
+    {id:"level_5",name:"AWAKENED",icon:"👁️",desc:"Reach Level 5"},
+    {id:"level_10",name:"D-RANK HUNTER",icon:"🔵",desc:"Reach Level 10"},
+    {id:"level_25",name:"C-RANK HUNTER",icon:"🟢",desc:"Reach Level 25"},
+    {id:"level_50",name:"B-RANK HUNTER",icon:"🟠",desc:"Reach Level 50"},
+    {id:"level_100",name:"S-RANK HUNTER",icon:"🌟",desc:"Reach Level 100"},
+    {id:"level_200",name:"SHADOW MONARCH",icon:"👑",desc:"Reach Level 200"},
+    {id:"streak_7",name:"WEEK WARRIOR",icon:"🗡️",desc:"7-day login streak"},
+    {id:"streak_30",name:"IRON WILL",icon:"⚔️",desc:"30-day login streak"},
+    {id:"quest_10",name:"QUEST HUNTER",icon:"📜",desc:"Complete 10 quests"},
+    {id:"stat_100",name:"POWER SURGE",icon:"⚡",desc:"Any stat reaches 100"},
+    {id:"gold_1000",name:"WEALTHY HUNTER",icon:"💰",desc:"Accumulate 1,000 gold"},
+    {id:"first_quest",name:"FIRST QUEST",icon:"✅",desc:"Complete your first quest"},
+    {id:"level_3",name:"HUNTER INITIATE",icon:"🌑",desc:"Reach Level 3"},
+    {id:"level_15",name:"RISING HUNTER",icon:"🔷",desc:"Reach Level 15"},
+    {id:"level_75",name:"A-RANK HUNTER",icon:"🔴",desc:"Reach Level 75"},
+    {id:"level_150",name:"NATIONAL LEVEL",icon:"🏴",desc:"Reach Level 150"},
+    {id:"quest_5",name:"QUEST APPRENTICE",icon:"📋",desc:"Complete 5 quests"},
+    {id:"quest_25",name:"DUNGEON RAIDER",icon:"🏰",desc:"Complete 25 quests"},
+    {id:"quest_50",name:"GATE CONQUEROR",icon:"🚪",desc:"Complete 50 quests"},
+    {id:"all_daily",name:"PERFECT DAY",icon:"☀️",desc:"Complete all daily quests"},
+    {id:"first_stat",name:"STAT ALLOCATION",icon:"📊",desc:"Allocate first stat point"},
+    {id:"stat_50",name:"FORMIDABLE",icon:"🔥",desc:"Any stat reaches 50"},
+    {id:"gold_500",name:"POCKET CHANGE",icon:"🪙",desc:"Accumulate 500 gold"},
+    {id:"gold_5000",name:"RICH HUNTER",icon:"💎",desc:"Accumulate 5,000 gold"},
+    {id:"streak_3",name:"GETTING STARTED",icon:"🔗",desc:"3-day login streak"},
+    {id:"streak_14",name:"DEDICATED",icon:"🛡️",desc:"14-day login streak"},
+    {id:"streak_100",name:"LEGENDARY WILL",icon:"🏆",desc:"100-day login streak"},
+    {id:"first_skill",name:"SKILL ACQUIRED",icon:"✨",desc:"Upgrade first skill"},
+    {id:"first_buy",name:"FIRST PURCHASE",icon:"🛒",desc:"Buy first shop item"},
+    {id:"own_10_items",name:"COLLECTOR",icon:"🎒",desc:"Own 10 items"},
+    {id:"monarch_rank",name:"THE SOVEREIGN",icon:"👁️",desc:"Reach Monarch rank"},
+    {id:"special_quest",name:"SPECIAL OPS",icon:"🎖️",desc:"Complete a special quest"},
+  ];
+}
+
+function checkAchievements() {
+  if (!player) return;
+  const achs = getAchievements();
+  let newAch = false;
+  const unlock = (id) => {
+    if (!player.achievements.includes(id)) {
+      player.achievements.push(id);
+      const a = achs.find(x=>x.id===id);
+      if (a) notify("ACHIEVEMENT UNLOCKED: " + a.name, "gold");
+      newAch = true;
+    }
+  };
+  unlock("first_login");
+  if (player.level>=3) unlock("level_3");
+  if (player.level>=5) unlock("level_5");
+  if (player.level>=10) unlock("level_10");
+  if (player.level>=15) unlock("level_15");
+  if (player.level>=25) unlock("level_25");
+  if (player.level>=50) unlock("level_50");
+  if (player.level>=75) unlock("level_75");
+  if (player.level>=100) unlock("level_100");
+  if (player.level>=150) unlock("level_150");
+  if (player.level>=200) unlock("level_200");
+  const streak = player.streak?.login || 0;
+  if (streak>=3) unlock("streak_3");
+  if (streak>=7) unlock("streak_7");
+  if (streak>=14) unlock("streak_14");
+  if (streak>=30) unlock("streak_30");
+  if (streak>=100) unlock("streak_100");
+  const totalQuests = Object.values(player.quests?.daily||{}).filter(Boolean).length +
+    Object.values(player.quests?.weekly||{}).filter(Boolean).length +
+    Object.values(player.quests?.special||{}).filter(Boolean).length;
+  if (totalQuests>=1) unlock("first_quest");
+  if (totalQuests>=5) unlock("quest_5");
+  if (totalQuests>=10) unlock("quest_10");
+  if (totalQuests>=25) unlock("quest_25");
+  if (totalQuests>=50) unlock("quest_50");
+  if (Object.values(player.quests?.daily||{}).filter(Boolean).length>=getDailyQuestDefs().length) unlock("all_daily");
+  if (Object.values(player.quests?.special||{}).filter(Boolean).length>=1) unlock("special_quest");
+  const statVals = Object.values(player.stats);
+  const maxStat = Math.max(...statVals);
+  if (Object.values(player.stats).reduce((a,b)=>a+b,0)>65) unlock("first_stat");
+  if (maxStat>=50) unlock("stat_50");
+  if (maxStat>=100) unlock("stat_100");
+  const gold = player.gold||0;
+  if (gold>=500) unlock("gold_500");
+  if (gold>=1000) unlock("gold_1000");
+  if (gold>=5000) unlock("gold_5000");
+  if (player.skills?.length>0 && player.skills.some(s=>s.level>0)) unlock("first_skill");
+  if ((player.inventory||[]).length>0) unlock("first_buy");
+  if ((player.inventory||[]).length>=10) unlock("own_10_items");
+  if (player.rank==="Monarch") unlock("monarch_rank");
+  if (newAch) savePlayer();
+  renderAchievements();
+}
+
+function renderAchievements() {
+  const achs = getAchievements();
+  const html = achs.map(a => {
+    const unlocked = player.achievements?.includes(a.id);
+    return `<div class="ach-card ${unlocked?'unlocked':'locked'}">
+      <div class="ach-icon">${a.icon}</div>
+      <div class="ach-name">${a.name}</div>
+      <div style="font-family:Share Tech Mono,monospace;font-size:clamp(7px,1.8vw,9px);color:rgba(0,245,255,0.25);margin-top:4px">${a.desc}</div>
+    </div>`;
+  }).join('');
+  const grid = document.getElementById("achievementsGrid");
+  if (grid) grid.innerHTML = html;
+}
+
+function getSkillDefs() {
+  return {
+    "COMBAT": [
+      {id:"power_strike",name:"Power Strike",desc:"Increases base ATK",unlockLevel:1,maxLevel:5},
+      {id:"iron_body",name:"Iron Body",desc:"Passive HP boost",unlockLevel:5,maxLevel:5},
+      {id:"shadow_step",name:"Shadow Step",desc:"+30% speed burst",unlockLevel:10,maxLevel:3},
+      {id:"devastate",name:"Devastate",desc:"Critical damage+",unlockLevel:20,maxLevel:5},
+    ],
+    "INTELLIGENCE": [
+      {id:"arcane_mind",name:"Arcane Mind",desc:"MP regeneration",unlockLevel:1,maxLevel:5},
+      {id:"mana_shield",name:"Mana Shield",desc:"Block damage with MP",unlockLevel:8,maxLevel:3},
+      {id:"insight",name:"Insight",desc:"Reveals enemy weakness",unlockLevel:15,maxLevel:3},
+    ],
+    "PRODUCTIVITY": [
+      {id:"focus",name:"Deep Focus",desc:"+10% XP from study",unlockLevel:1,maxLevel:5},
+      {id:"iron_will",name:"Iron Will",desc:"+5% XP from all quests",unlockLevel:10,maxLevel:5},
+      {id:"efficiency",name:"Efficiency",desc:"Quest XP doubled once/day",unlockLevel:25,maxLevel:1},
+    ],
+    "FITNESS": [
+      {id:"endurance",name:"Endurance",desc:"+VIT on exercise quests",unlockLevel:1,maxLevel:5},
+      {id:"beast_mode",name:"Beast Mode",desc:"2x exercise XP",unlockLevel:15,maxLevel:3},
+      {id:"peak_form",name:"Peak Form",desc:"HP regen between sessions",unlockLevel:30,maxLevel:3},
+    ]
+  };
+}
+
+function renderSkills() {
+  const defs = getSkillDefs();
+  const container = document.getElementById("skillsContent");
+  if (!container) return;
+  container.innerHTML = Object.entries(defs).map(([cat,skills]) =>
+    `<div class="skill-category">
+      <div class="skill-cat-title">${cat}</div>
+      <div class="skill-grid">${skills.map(s => {
+        const unlocked = player.level >= s.unlockLevel;
+        const playerSkill = player.skills?.find(x=>x.id===s.id);
+        const skillLevel = playerSkill?.level || 0;
+        const pct = (skillLevel/s.maxLevel)*100;
+        return `<div class="skill-card ${unlocked?'unlocked':'locked'}" onclick="upgradeSkill('${s.id}')">
+          <div class="skill-name">${s.name}</div>
+          <div class="skill-level-bar"><div class="skill-level-fill" style="width:${pct}%"></div></div>
+          <div style="font-family:Share Tech Mono,monospace;font-size:clamp(8px,2vw,10px);color:rgba(0,245,255,0.35)">LVL ${skillLevel}/${s.maxLevel}</div>
+          <div class="skill-desc">${s.desc}</div>
+          ${!unlocked?`<div class="skill-unlock-req">UNLOCK AT LVL ${s.unlockLevel}</div>`:''}
+        </div>`;
+      }).join('')}</div>
+    </div>`
+  ).join('');
+}
+
+window.upgradeSkill = async function(id) {
+  if (!player) return;
+  const all = Object.values(getSkillDefs()).flat();
+  const def = all.find(s=>s.id===id);
+  if (!def || player.level < def.unlockLevel) return;
+  let skill = player.skills?.find(s=>s.id===id);
+  if (!skill) { skill={id,level:0}; if(!player.skills)player.skills=[]; player.skills.push(skill); }
+  if (skill.level >= def.maxLevel) { notify("MAX LEVEL REACHED",""); return; }
+  if ((player.statPoints||0)<1) { notify("NEED STAT POINTS TO UPGRADE",""); return; }
+  skill.level++;
+  player.statPoints--;
+  await savePlayer(); renderSkills(); renderStats();
+  notify(def.name + " UPGRADED TO LEVEL " + skill.level, "green");
+  playSound('click');
+};
+
+function renderStreakDays() {
+  const streak = player.streak?.login || 0;
+  const days7 = Array.from({length:7},(_,i) => {
+    const active = i < (streak % 7) || streak >= 7;
+    const isToday = i === (streak-1)%7 && streak>0;
+    return `<div class="streak-day ${active?'active':''} ${isToday?'today':''}">${i+1}</div>`;
+  }).join('');
+  const el1 = document.getElementById("streakDays");
+  const el2 = document.getElementById("streakDaysFull");
+  if (el1) el1.innerHTML = days7;
+  if (el2) el2.innerHTML = days7;
+}
+
+// ── SHOP ──
+function getShopItems() {
+  return {
+    weapons:[
+      {id:"knight_killer",name:"Knight Killer",icon:"🗡️",desc:"A basic dagger favored by E-Rank hunters",price:200,rarity:"common",type:"weapon",stats:{strength:5}},
+      {id:"steel_longsword",name:"Steel Longsword",icon:"⚔️",desc:"Standard-issue blade for D-Rank dungeon raids",price:500,rarity:"uncommon",type:"weapon",stats:{strength:10,agility:3}},
+      {id:"shadow_dagger",name:"Shadow Dagger",icon:"🔪",desc:"A blade that moves faster than the eye can track",price:1500,rarity:"rare",type:"weapon",stats:{strength:10,agility:15}},
+      {id:"demon_shortsword",name:"Demon King's Shortsword",icon:"⚔️",desc:"Forged in the depths of a demon-class gate",price:3000,rarity:"epic",type:"weapon",stats:{strength:25,agility:10}},
+      {id:"kamish_wrath",name:"Kamish's Wrath",icon:"⚔️",desc:"The dragon Kamish's fang, reforged into twin blades",price:15000,rarity:"legendary",type:"weapon",stats:{strength:60,agility:30,vitality:20}},
+      {id:"demon_monarch_daggers",name:"Demon Monarch Daggers",icon:"🗡️",desc:"Weapons of the Shadow Monarch — absolute power",price:30000,rarity:"srank",type:"weapon",stats:{strength:100,agility:50,vitality:30}},
+    ],
+    armor:[
+      {id:"hunter_leather",name:"Hunter's Leather",icon:"🧥",desc:"Basic protection for new hunters",price:300,rarity:"common",type:"armor",stats:{vitality:5}},
+      {id:"steel_plate",name:"Steel Plate Armor",icon:"🛡️",desc:"Heavy armor used by C-Rank hunters",price:800,rarity:"uncommon",type:"armor",stats:{vitality:12,strength:5}},
+      {id:"shadow_armor",name:"Shadow Armor",icon:"🖤",desc:"Armor woven from shadow threads — light yet unbreakable",price:2000,rarity:"rare",type:"armor",stats:{vitality:25,agility:10}},
+      {id:"demon_armor",name:"Demon King's Armor",icon:"🛡️",desc:"Armor infused with the power of the demon world",price:8000,rarity:"epic",type:"armor",stats:{vitality:50,strength:20}},
+      {id:"monarch_domain",name:"Monarch's Domain",icon:"👤",desc:"The Shadow Monarch's full battle regalia",price:25000,rarity:"srank",type:"armor",stats:{vitality:80,strength:40,agility:30}},
+    ],
+    accessories:[
+      {id:"hunter_ring",name:"Hunter's Ring",icon:"💍",desc:"A simple ring that sharpens awareness",price:150,rarity:"common",type:"accessory",stats:{perception:3}},
+      {id:"mana_crystal",name:"Mana Crystal",icon:"🔮",desc:"A crystal that amplifies magical energy",price:400,rarity:"uncommon",type:"accessory",stats:{intelligence:10}},
+      {id:"shadow_orb",name:"Shadow Orb",icon:"🌑",desc:"An orb pulsing with shadow energy",price:1200,rarity:"rare",type:"accessory",stats:{intelligence:15,perception:10}},
+      {id:"monarch_eye",name:"Monarch's Eye",icon:"👁️",desc:"See all, know all — the eye of the supreme ruler",price:10000,rarity:"legendary",type:"accessory",stats:{perception:40,intelligence:30,luck:20}},
+    ],
+    consumables:[
+      {id:"hp_potion",name:"HP Potion",icon:"❤️",desc:"Restores 50 HP instantly",price:50,rarity:"common",type:"consumable",effect:"hp",value:50},
+      {id:"mp_potion",name:"MP Potion",icon:"💙",desc:"Restores 30 MP instantly",price:50,rarity:"common",type:"consumable",effect:"mp",value:30},
+      {id:"str_elixir",name:"Strength Elixir",icon:"⚔️",desc:"+2 permanent Strength",price:200,rarity:"rare",type:"consumable",effect:"stat",stat:"strength",value:2},
+      {id:"agi_elixir",name:"Agility Elixir",icon:"💨",desc:"+2 permanent Agility",price:200,rarity:"rare",type:"consumable",effect:"stat",stat:"agility",value:2},
+      {id:"xp_scroll",name:"XP Scroll",icon:"📜",desc:"+100 XP instantly",price:300,rarity:"epic",type:"consumable",effect:"xp",value:100},
+    ]
+  };
+}
+
+let currentShopTab = 'weapons';
+let currentInvTab = 'inventory';
+
+window.switchInventoryTab = function(tab) {
+  currentInvTab = tab;
+  document.querySelectorAll('#page-inventory .sys-tab').forEach((el,i) => {
+    el.classList.toggle('active',['inventory','shop'][i]===tab);
+  });
+  document.getElementById('invPanel').style.display = tab==='inventory'?'block':'none';
+  document.getElementById('shopPanel').style.display = tab==='shop'?'block':'none';
+  if (tab==='shop') renderShop();
+  if (tab==='inventory') renderInventory();
+};
+
+window.switchShopTab = function(tab) {
+  currentShopTab = tab;
+  document.querySelectorAll('.shop-tab').forEach((el,i) => {
+    el.classList.toggle('active',['weapons','armor','accessories','consumables'][i]===tab);
+  });
+  renderShop();
+};
+
+function renderShop() {
+  const shop = getShopItems();
+  const items = shop[currentShopTab]||[];
+  const goldEl = document.getElementById('shopGoldAmount');
+  if (goldEl) goldEl.textContent = (player.gold||0).toLocaleString();
+  const inv = player.inventory||[];
+  document.getElementById('shopGrid').innerHTML = items.map(item => {
+    const isConsumable = item.type==='consumable';
+    const owned = !isConsumable && inv.some(i=>i.id===item.id);
+    const canAfford = (player.gold||0)>=item.price;
+    const cls = owned?'owned':(!canAfford?'cant-afford':'');
+    let statTags = '';
+    if (item.stats) statTags = Object.entries(item.stats).map(([k,v])=>`<span class="shop-stat-tag">+${v} ${k.substring(0,3).toUpperCase()}</span>`).join('');
+    if (item.effect==='hp') statTags=`<span class="shop-stat-tag">+${item.value} HP</span>`;
+    if (item.effect==='mp') statTags=`<span class="shop-stat-tag">+${item.value} MP</span>`;
+    if (item.effect==='stat') statTags=`<span class="shop-stat-tag">+${item.value} ${item.stat.substring(0,3).toUpperCase()}</span>`;
+    if (item.effect==='xp') statTags=`<span class="shop-stat-tag">+${item.value} XP</span>`;
+    const rarityLabel = item.rarity==='srank'?'S-RANK':item.rarity.toUpperCase();
+    return `<div class="shop-item rarity-${item.rarity} ${cls}">
+      <div class="shop-item-header">
+        <div class="shop-item-icon">${item.icon}</div>
+        <div class="shop-item-info">
+          <div class="shop-item-name">${item.name}</div>
+          <div class="shop-item-rarity">${rarityLabel}</div>
+        </div>
+      </div>
+      <div class="shop-item-desc">${item.desc}</div>
+      <div class="shop-item-stats">${statTags}</div>
+      <div class="shop-item-footer">
+        <div class="shop-item-price">💰 ${item.price.toLocaleString()}</div>
+        ${owned?'':`<button class="shop-buy-btn" onclick="buyItem('${currentShopTab}','${item.id}')">${canAfford?'BUY':'NOT ENOUGH'}</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.buyItem = async function(category, id) {
+  const shop = getShopItems();
+  const item = shop[category]?.find(i=>i.id===id);
+  if (!item) return;
+  const isConsumable = item.type==='consumable';
+  if (!isConsumable && player.inventory?.some(i=>i.id===item.id)) { notify("ALREADY OWNED",""); return; }
+  if ((player.gold||0)<item.price) { notify("NOT ENOUGH GOLD",""); return; }
+  player.gold -= item.price;
+  if (!player.totalSpent) player.totalSpent=0;
+  player.totalSpent += item.price;
+  if (isConsumable) {
+    if (item.effect==='hp') { const d=derivedStats(player); player.hp=Math.min((player.hp||0)+item.value,d.hp); notify("RESTORED "+item.value+" HP","green"); }
+    else if (item.effect==='mp') { const d=derivedStats(player); player.mp=Math.min((player.mp||0)+item.value,d.mp); notify("RESTORED "+item.value+" MP","green"); }
+    else if (item.effect==='stat') { player.stats[item.stat]=(player.stats[item.stat]||0)+item.value; const d=derivedStats(player); player.hpMax=d.hp; player.mpMax=d.mp; notify(item.stat.toUpperCase()+" +"+item.value,"green"); }
+    else if (item.effect==='xp') { await addXP(item.value); notify("+"+item.value+" XP","green"); }
+    const existing = player.inventory?.find(i=>i.id===item.id);
+    if (existing) existing.qty=(existing.qty||1)+1;
+    else { if(!player.inventory)player.inventory=[]; player.inventory.push({id:item.id,name:item.name,icon:item.icon,type:item.type,rarity:item.rarity,qty:1}); }
+  } else {
+    if (!player.inventory) player.inventory=[];
+    player.inventory.push({id:item.id,name:item.name,icon:item.icon,type:item.type,rarity:item.rarity,qty:1,stats:item.stats});
+    if (item.stats) {
+      Object.entries(item.stats).forEach(([stat,val]) => { if(player.stats[stat]!==undefined) player.stats[stat]+=val; });
+      const d=derivedStats(player); player.hpMax=d.hp; player.mpMax=d.mp;
+    }
+    notify("ACQUIRED: "+item.name,"green");
+  }
+  await savePlayer(); renderShop(); renderInventory(); renderAll(); checkAchievements();
+  playSound('click');
+};
+
+function renderInventory() {
+  const slots = document.getElementById("invSlots");
+  if (!slots) return;
+  const items = player.inventory||[];
+  const totalSlots = Math.max(24, items.length);
+  const goldDisplay = document.getElementById("invGoldDisplay");
+  if (goldDisplay) goldDisplay.textContent = "💰 "+(player.gold||0).toLocaleString()+"G";
+  let html = items.map(item => {
+    const rarityClass = item.rarity?'rarity-'+item.rarity:'';
+    return `<div class="inv-slot ${rarityClass}">
+      <div class="inv-item-icon">${item.icon}</div>
+      <div class="inv-item-name">${item.name}<br><span style="color:var(--gold)">x${item.qty||1}</span></div>
+    </div>`;
+  }).join('');
+  for (let i=items.length;i<totalSlots;i++) html+=`<div class="inv-slot empty"><div style="font-size:18px;color:rgba(0,245,255,0.08)">+</div></div>`;
+  slots.innerHTML = html;
+}
+
+async function loadLeaderboard() {
+  try {
+    const q = await getDocs(collection(db,"users"));
+    let users = [];
+    q.forEach(d => {
+      const data = d.data();
+      users.push({ name:data.displayName||data.name||"Hunter", nickname:data.nickname||"", level:data.level||1, rank:data.rank||"E" });
+    });
+    users.sort((a,b)=>b.level-a.level);
+    const rankColors = {E:"#999",D:"#4488ff",C:"#44ff88",B:"#ff8800",A:"#ff44ff",S:"#ffd700",National:"#00f5ff",Monarch:"#fff"};
+    document.getElementById("leaderboardList").innerHTML = users.slice(0,50).map((user,index) => {
+      const medal = index===0?"1st":index===1?"2nd":index===2?"3rd":"#"+(index+1);
+      const fullName = user.nickname?user.name+" ("+user.nickname+")":user.name;
+      const rankColor = rankColors[user.rank]||"#999";
+      return `<div class="leaderboard-row">
+        <div class="lb-rank ${index===0?'gold':index===1?'silver':index===2?'bronze':''}">${medal}</div>
+        <div class="lb-name">${fullName}</div>
+        <div class="lb-level" style="color:${rankColor}">RANK ${user.rank} — LVL ${user.level}</div>
+      </div>`;
+    }).join('') || "<div style='padding:20px;text-align:center;color:rgba(0,245,255,0.3);font-family:Share Tech Mono,monospace'>NO HUNTERS FOUND</div>";
+  } catch (e) { console.error(e); }
+}
+
+// ── NAV ──
+window.navigate = function(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const target = document.getElementById('page-'+page);
+  if (target) target.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const pages = ['dashboard','stats','quests','skills','achievements','dungeon','shadow','inventory','streak','leaderboard'];
+  const idx = pages.indexOf(page);
+  const items = document.querySelectorAll('.nav-item');
+  if (idx>=0 && items[idx]) items[idx].classList.add('active');
+  if (page==='quests') renderQuestPage();
+  if (page==='leaderboard') loadLeaderboard();
+  if (window.innerWidth<=768) {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("sidebarOverlay").classList.remove("active");
+  }
+  window.scrollTo(0,0);
+  playSound('click');
+};
+
+window.toggleSidebar = function() {
+  document.getElementById("sidebar").classList.toggle("open");
+  document.getElementById("sidebarOverlay").classList.toggle("active");
+};
+
+window.logout = async function() {
+  if (unsubscribe) unsubscribe();
+  await signOut(auth);
+  window.location.href = "login.html";
+};
+
+// Nav item click sounds
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => playSound('click'));
+});
+</script>
+</body>
+</html>

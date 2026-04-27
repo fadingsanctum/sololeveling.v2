@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Admin Control Panel — SYSTEM</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" type="image/png" href="favicon.jpg">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan: #00f5ff;
+  --blue: #0066ff;
+  --purple: #7b00ff;
+  --gold: #ffd700;
+  --green: #00ff88;
+  --red: #ff4444;
+  --orange: #ff8800;
+  --dark: #00060f;
+  --darker: #000308;
+  --panel: rgba(0,10,28,0.92);
+  --border: rgba(0,245,255,0.25);
+  --glow: 0 0 20px rgba(0,245,255,0.4);
+  --glow-gold: 0 0 20px rgba(255,215,0,0.5);
+  --glow-red: 0 0 20px rgba(255,68,68,0.4);
+  --topbar-h: 60px;
+  --sidebar-w: 240px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--darker);
+  color: var(--cyan);
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Grid BG */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(0,245,255,0.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,245,255,0.02) 1px,transparent 1px);
+  background-size:50px 50px;
+  pointer-events:none;
+  z-index:0;
+}
+
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+  pointer-events:none;
+  z-index:999;
+}
+
+/* ─── TOPBAR ─── */
+.topbar {
+  position:fixed;
+  top:0; left:0; right:0;
+  height:var(--topbar-h);
+  background:rgba(0,4,12,0.97);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  padding:0 16px;
+  gap:12px;
+  z-index:200;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+}
+
+.topbar-logo {
+  font-family:'Orbitron',monospace;
+  font-size:clamp(11px,2vw,15px);
+  font-weight:900;
+  letter-spacing:3px;
+  color:var(--red);
+  text-shadow: 0 0 15px rgba(255,68,68,0.6);
+  white-space:nowrap;
+}
+
+.topbar-logo span { color:var(--cyan); }
+
+.topbar-uid-display {
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  color:rgba(0,245,255,0.4);
+  letter-spacing:1px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  flex:1;
+}
+
+.topbar-status {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  letter-spacing:2px;
+  color:rgba(0,255,136,0.7);
+  margin-left:auto;
+}
+
+.status-dot {
+  width:6px; height:6px;
+  border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 8px var(--green);
+  animation:blink 2s step-end infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.hamburger-btn {
+  display:none;
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--cyan);
+  padding:6px 10px;
+  cursor:pointer;
+  font-size:18px;
+  min-height:36px;
+}
+
+/* ─── SIDEBAR ─── */
+.sidebar {
+  position:fixed;
+  top:var(--topbar-h);
+  left:0;
+  bottom:0;
+  width:var(--sidebar-w);
+  background:rgba(0,4,12,0.96);
+  border-right:1px solid var(--border);
+  overflow-y:auto;
+  z-index:150;
+  transition:transform 0.3s ease;
+  -webkit-overflow-scrolling:touch;
+  display:flex;
+  flex-direction:column;
+}
+
+.sidebar-section-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  letter-spacing:3px;
+  color:rgba(0,245,255,0.3);
+  padding:18px 16px 6px;
+  text-transform:uppercase;
+}
+
+.nav-item {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 16px;
+  cursor:pointer;
+  font-family:'Rajdhani',sans-serif;
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:1.5px;
+  color:rgba(0,245,255,0.55);
+  border-left:2px solid transparent;
+  transition:all 0.2s;
+  min-height:44px;
+  text-transform:uppercase;
+}
+
+.nav-item:hover {
+  color:var(--cyan);
+  background:rgba(0,245,255,0.04);
+  border-left-color:rgba(0,245,255,0.4);
+}
+
+.nav-item.active {
+  color:var(--cyan);
+  background:rgba(0,245,255,0.07);
+  border-left-color:var(--cyan);
+  text-shadow:0 0 10px rgba(0,245,255,0.4);
+}
+
+.nav-item.danger { color:rgba(255,68,68,0.55); }
+.nav-item.danger:hover { color:var(--red); border-left-color:rgba(255,68,68,0.4); background:rgba(255,68,68,0.04); }
+.nav-item.danger.active { color:var(--red); border-left-color:var(--red); background:rgba(255,68,68,0.07); }
+
+.nav-icon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
+
+/* ─── MAIN CONTENT ─── */
+.main-content {
+  margin-top:var(--topbar-h);
+  margin-left:var(--sidebar-w);
+  min-height:calc(100vh - var(--topbar-h));
+  padding:24px;
+  position:relative;
+  z-index:1;
+}
+
+/* ─── PAGES ─── */
+.page { display:none; }
+.page.active { display:block; animation:fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ─── SECTION TITLE ─── */
+.section-title {
+  font-family:'Orbitron',monospace;
+  font-size:clamp(16px,2.5vw,22px);
+  font-weight:900;
+  letter-spacing:4px;
+  margin-bottom:20px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.section-title span { color:var(--cyan); text-shadow:0 0 15px rgba(0,245,255,0.5); }
+.section-title small {
+  font-size:11px;
+  font-family:'Share Tech Mono',monospace;
+  color:rgba(0,245,255,0.4);
+  letter-spacing:2px;
+  font-weight:400;
+}
+
+/* ─── PANEL ─── */
+.panel {
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:20px;
+  backdrop-filter:blur(15px);
+  -webkit-backdrop-filter:blur(15px);
+  box-shadow:var(--glow);
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));
+  margin-bottom:20px;
+}
+
+.panel.danger-panel { border-color:rgba(255,68,68,0.3); box-shadow:var(--glow-red); }
+.panel.gold-panel { border-color:rgba(255,215,0,0.3); box-shadow:var(--glow-gold); }
+.panel.green-panel { border-color:rgba(0,255,136,0.3); box-shadow:0 0 20px rgba(0,255,136,0.3); }
+
+.panel-title {
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  letter-spacing:3px;
+  color:rgba(0,245,255,0.5);
+  margin-bottom:14px;
+  text-transform:uppercase;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.panel-title::after {
+  content:'';
+  flex:1;
+  height:1px;
+  background:linear-gradient(90deg,rgba(0,245,255,0.2),transparent);
+}
+
+/* ─── GRID LAYOUTS ─── */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+
+/* ─── INPUTS ─── */
+label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  letter-spacing:2px;
+  color:rgba(0,245,255,0.55);
+  display:block;
+  margin-top:12px;
+  margin-bottom:4px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+select,
+textarea {
+  width:100%;
+  padding:9px 12px;
+  background:rgba(0,245,255,0.03);
+  border:1px solid rgba(0,245,255,0.2);
+  color:var(--cyan);
+  font-family:'Share Tech Mono',monospace;
+  font-size:13px;
+  outline:none;
+  transition:all 0.2s;
+  min-height:40px;
+  border-radius:0;
+  -webkit-appearance:none;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color:var(--cyan);
+  background:rgba(0,245,255,0.06);
+  box-shadow:0 0 12px rgba(0,245,255,0.15);
+}
+
+input::placeholder, textarea::placeholder { color:rgba(0,245,255,0.2); }
+
+select option { background:#000c1e; color:var(--cyan); }
+
+textarea { resize:vertical; min-height:80px; }
+
+/* ─── BUTTONS ─── */
+.btn {
+  padding:10px 18px;
+  background:rgba(0,245,255,0.07);
+  border:1px solid var(--cyan);
+  color:var(--cyan);
+  font-family:'Orbitron',monospace;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:2px;
+  cursor:pointer;
+  transition:all 0.2s;
+  min-height:40px;
+  text-transform:uppercase;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+}
+
+.btn:hover { background:rgba(0,245,255,0.15); box-shadow:var(--glow); }
+.btn:disabled { opacity:0.4; cursor:not-allowed; }
+
+.btn-full { width:100%; justify-content:center; }
+.btn-sm { padding:6px 12px; font-size:10px; min-height:32px; }
+
+.btn-gold { border-color:var(--gold); color:var(--gold); background:rgba(255,215,0,0.06); }
+.btn-gold:hover { background:rgba(255,215,0,0.15); box-shadow:var(--glow-gold); }
+
+.btn-green { border-color:var(--green); color:var(--green); background:rgba(0,255,136,0.06); }
+.btn-green:hover { background:rgba(0,255,136,0.15); box-shadow:0 0 20px rgba(0,255,136,0.4); }
+
+.btn-red { border-color:var(--red); color:var(--red); background:rgba(255,68,68,0.06); }
+.btn-red:hover { background:rgba(255,68,68,0.15); box-shadow:var(--glow-red); }
+
+.btn-orange { border-color:var(--orange); color:var(--orange); background:rgba(255,136,0,0.06); }
+.btn-orange:hover { background:rgba(255,136,0,0.15); }
+
+.btn-purple { border-color:var(--purple); color:#a855f7; background:rgba(123,0,255,0.07); }
+.btn-purple:hover { background:rgba(123,0,255,0.18); }
+
+/* ─── STAT CARDS ─── */
+.stat-card {
+  background:rgba(0,245,255,0.04);
+  border:1px solid rgba(0,245,255,0.15);
+  padding:14px;
+  text-align:center;
+}
+
+.stat-card .val {
+  font-family:'Orbitron',monospace;
+  font-size:clamp(18px,3vw,28px);
+  font-weight:900;
+  color:var(--cyan);
+}
+
+.stat-card .val.gold { color:var(--gold); }
+.stat-card .val.green { color:var(--green); }
+.stat-card .val.red { color:var(--red); }
+
+.stat-card .lbl {
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  letter-spacing:2px;
+  color:rgba(0,245,255,0.4);
+  margin-top:4px;
+}
+
+/* ─── PLAYER CARD ─── */
+.player-card {
+  background:rgba(0,245,255,0.04);
+  border:1px solid rgba(0,245,255,0.15);
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin-bottom:8px;
+  transition:all 0.2s;
+  cursor:pointer;
+}
+
+.player-card:hover { border-color:rgba(0,245,255,0.4); background:rgba(0,245,255,0.07); }
+
+.player-avatar-sm {
+  width:40px; height:40px;
+  border:2px solid var(--cyan);
+  border-radius:50%;
+  background:linear-gradient(135deg,rgba(0,102,255,0.3),rgba(123,0,255,0.3));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Orbitron',monospace;
+  font-size:14px;
+  font-weight:700;
+  flex-shrink:0;
+  background-size:cover;
+  background-position:center;
+}
+
+.player-info-col { flex:1; min-width:0; }
+.player-info-col .pname {
+  font-family:'Orbitron',monospace;
+  font-size:12px;
+  font-weight:700;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.player-info-col .pmeta {
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  color:rgba(0,245,255,0.5);
+  margin-top:2px;
+  letter-spacing:1px;
+}
+
+.rank-badge {
+  font-family:'Orbitron',monospace;
+  font-size:12px;
+  font-weight:900;
+  padding:4px 8px;
+  border:1px solid;
+  letter-spacing:2px;
+  flex-shrink:0;
+}
+
+.rank-E { color:#888; border-color:#888; }
+.rank-D { color:#88aaff; border-color:#88aaff; }
+.rank-C { color:var(--green); border-color:var(--green); }
+.rank-B { color:var(--cyan); border-color:var(--cyan); }
+.rank-A { color:var(--purple); border-color:var(--purple); filter:brightness(1.5); }
+.rank-S { color:var(--gold); border-color:var(--gold); box-shadow:var(--glow-gold); }
+
+/* ─── TOAST ─── */
+#toastContainer {
+  position:fixed;
+  top:calc(var(--topbar-h) + 10px);
+  right:16px;
+  z-index:9999;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-width:min(320px, calc(100vw - 32px));
+  pointer-events:none;
+}
+
+.toast {
+  padding:12px 16px;
+  background:rgba(0,8,24,0.97);
+  border-left:3px solid var(--cyan);
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+  letter-spacing:1px;
+  box-shadow:var(--glow);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  animation:slideIn 0.3s ease, fadeOut 0.4s ease 3.6s forwards;
+  word-break:break-word;
+}
+
+.toast.success { border-color:var(--green); color:var(--green); box-shadow:0 0 20px rgba(0,255,136,0.3); }
+.toast.error { border-color:var(--red); color:var(--red); box-shadow:var(--glow-red); }
+.toast.gold { border-color:var(--gold); color:var(--gold); box-shadow:var(--glow-gold); }
+.toast.warn { border-color:var(--orange); color:var(--orange); }
+
+@keyframes slideIn { from{transform:translateX(110%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes fadeOut { to{opacity:0;transform:translateX(110%)} }
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  z-index:5000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  backdrop-filter:blur(6px);
+}
+
+.modal-overlay.open { display:flex; animation:fadeIn 0.2s ease; }
+
+.modal-box {
+  background:rgba(0,8,24,0.98);
+  border:1px solid var(--border);
+  padding:24px;
+  max-width:500px;
+  width:100%;
+  box-shadow:var(--glow);
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,16px 100%,0 calc(100% - 16px));
+}
+
+.modal-title {
+  font-family:'Orbitron',monospace;
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:3px;
+  margin-bottom:16px;
+  color:var(--cyan);
+}
+
+.modal-actions {
+  display:flex;
+  gap:10px;
+  margin-top:16px;
+  flex-wrap:wrap;
+}
+
+/* ─── DIVIDER ─── */
+.divider {
+  height:1px;
+  background:linear-gradient(90deg,rgba(0,245,255,0.15),transparent);
+  margin:16px 0;
+}
+
+/* ─── LOG TABLE ─── */
+.log-table {
+  width:100%;
+  border-collapse:collapse;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;
+}
+
+.log-table th {
+  text-align:left;
+  padding:8px 10px;
+  color:rgba(0,245,255,0.45);
+  letter-spacing:2px;
+  border-bottom:1px solid rgba(0,245,255,0.15);
+  font-size:10px;
+}
+
+.log-table td {
+  padding:8px 10px;
+  border-bottom:1px solid rgba(0,245,255,0.06);
+  color:rgba(0,245,255,0.75);
+}
+
+.log-table tr:hover td { background:rgba(0,245,255,0.03); }
+
+/* ─── SEARCH BAR ─── */
+.search-bar {
+  display:flex;
+  gap:10px;
+  margin-bottom:16px;
+}
+
+.search-bar input { flex:1; }
+
+/* ─── BADGE ─── */
+.badge {
+  display:inline-block;
+  padding:2px 8px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;
+  letter-spacing:1px;
+  border-radius:0;
+  border:1px solid;
+}
+
+.badge-cyan { color:var(--cyan); border-color:rgba(0,245,255,0.3); }
+.badge-gold { color:var(--gold); border-color:rgba(255,215,0,0.3); }
+.badge-green { color:var(--green); border-color:rgba(0,255,136,0.3); }
+.badge-red { color:var(--red); border-color:rgba(255,68,68,0.3); }
+.badge-orange { color:var(--orange); border-color:rgba(255,136,0,0.3); }
+
+/* ─── PROGRESS BAR ─── */
+.progress-wrap {
+  height:6px;
+  background:rgba(0,245,255,0.08);
+  border:1px solid rgba(0,245,255,0.12);
+  overflow:hidden;
+  margin:4px 0;
+}
+
+.progress-fill {
+  height:100%;
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+  box-shadow:0 0 6px var(--cyan);
+  transition:width 0.6s ease;
+}
+
+/* ─── REWARD CHIPS ─── */
+.reward-chip-grid {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:8px;
+}
+
+.reward-chip {
+  padding:6px 12px;
+  border:1px solid rgba(0,245,255,0.2);
+  background:rgba(0,245,255,0.04);
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  letter-spacing:1px;
+  cursor:pointer;
+  transition:all 0.2s;
+  color:rgba(0,245,255,0.7);
+}
+
+.reward-chip:hover, .reward-chip.selected {
+  border-color:var(--cyan);
+  background:rgba(0,245,255,0.1);
+  color:var(--cyan);
+}
+
+/* ─── BAN INDICATOR ─── */
+.banned-indicator {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 10px;
+  border:1px solid rgba(255,68,68,0.4);
+  color:var(--red);
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  letter-spacing:2px;
+}
+
+/* ─── SIDEBAR OVERLAY (MOBILE) ─── */
+.sidebar-overlay {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.6);
+  z-index:149;
+  backdrop-filter:blur(2px);
+  -webkit-backdrop-filter:blur(2px);
+}
+
+.sidebar-overlay.active { display:block; }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width:900px) {
+  .grid-4 { grid-template-columns:repeat(2,1fr); }
+}
+
+@media (max-width:768px) {
+  .sidebar {
+    transform:translateX(-100%);
+    width:280px;
+  }
+  .sidebar.open { transform:translateX(0); }
+  .main-content { margin-left:0; padding:16px; }
+  .grid-2 { grid-template-columns:1fr; }
+  .grid-3 { grid-template-columns:1fr 1fr; }
+  .grid-4 { grid-template-columns:1fr 1fr; }
+  .hamburger-btn { display:flex; align-items:center; }
+}
+
+@media (max-width:480px) {
+  .grid-3 { grid-template-columns:1fr; }
+  .grid-4 { grid-template-columns:1fr 1fr; }
+}
+
+/* ─── SYSTEM FOOTER ─── */
+#systemFooter {
+  position:fixed;
+  bottom:10px;
+  right:15px;
+  font-size:10px;
+  color:rgba(0,245,255,0.4);
+  font-family:'Orbitron',sans-serif;
+  z-index:9998;
+  pointer-events:none;
+  text-align:right;
+}
+#systemFooter span { display:block; font-size:8px; opacity:0.6; margin-top:2px; }
+
+/* ─── LOADING SPINNER ─── */
+.loading-spinner {
+  width:20px; height:20px;
+  border:2px solid rgba(0,245,255,0.2);
+  border-top-color:var(--cyan);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  display:inline-block;
+}
+
+@keyframes spin { to{transform:rotate(360deg)} }
+
+/* ─── ANNOUNCEMENT EDITOR ─── */
+.color-picker-row {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:6px;
+}
+
+.color-opt {
+  width:28px; height:28px;
+  border:2px solid transparent;
+  cursor:pointer;
+  transition:all 0.2s;
+  border-radius:0;
+}
+
+.color-opt.selected, .color-opt:hover { border-color:#fff; transform:scale(1.1); }
+
+/* ─── TITLE BADGE ─── */
+.title-chip {
+  padding:5px 12px;
+  border:1px solid rgba(0,245,255,0.2);
+  background:rgba(0,245,255,0.04);
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;
+  cursor:pointer;
+  transition:all 0.2s;
+  letter-spacing:1px;
+}
+
+.title-chip:hover, .title-chip.selected {
+  border-color:var(--gold);
+  color:var(--gold);
+  background:rgba(255,215,0,0.07);
+}
+</style>
+</head>
+<body>
+
+<!-- ─── TOPBAR ─── -->
+<div class="topbar">
+  <button class="hamburger-btn" onclick="toggleSidebar()">☰</button>
+  <div class="topbar-logo">⚔ ADMIN<span> PANEL</span></div>
+  <div class="topbar-uid-display" id="adminUIDBar">NO PLAYER LOADED</div>
+  <div class="topbar-status">
+    <div class="status-dot"></div>
+    <span id="onlineCount">0 ONLINE</span>
+  </div>
+</div>
+
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ─── SIDEBAR ─── -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-section-label">OVERVIEW</div>
+  <div class="nav-item active" onclick="navigate('overview')"><span class="nav-icon">📊</span>Dashboard</div>
+  <div class="nav-item" onclick="navigate('players')"><span class="nav-icon">👥</span>All Players</div>
+
+  <div class="sidebar-section-label">PLAYER CONTROL</div>
+  <div class="nav-item" onclick="navigate('editor')"><span class="nav-icon">✏️</span>Player Editor</div>
+  <div class="nav-item" onclick="navigate('rewards')"><span class="nav-icon">🎁</span>Give Rewards</div>
+  <div class="nav-item" onclick="navigate('inventory')"><span class="nav-icon">🎒</span>Inventory Edit</div>
+  <div class="nav-item" onclick="navigate('titles')"><span class="nav-icon">👑</span>Titles & Badges</div>
+  <div class="nav-item" onclick="navigate('skills')"><span class="nav-icon">⚡</span>Skills</div>
+  <div class="nav-item" onclick="navigate('quests')"><span class="nav-icon">📋</span>Quest Override</div>
+  <div class="nav-item" onclick="navigate('achievements')"><span class="nav-icon">🏆</span>Achievements</div>
+
+  <div class="sidebar-section-label">SYSTEM</div>
+  <div class="nav-item" onclick="navigate('broadcast')"><span class="nav-icon">📢</span>Broadcast</div>
+  <div class="nav-item" onclick="navigate('logs')"><span class="nav-icon">📜</span>Admin Logs</div>
+  <div class="nav-item" onclick="navigate('maintenance')"><span class="nav-icon">🔧</span>Maintenance</div>
+
+  <div class="sidebar-section-label">DANGER</div>
+  <div class="nav-item danger" onclick="navigate('danger')"><span class="nav-icon">☠️</span>Danger Zone</div>
+</div>
+
+<!-- ─── MAIN CONTENT ─── -->
+<div class="main-content">
+
+  <!-- ══════════ OVERVIEW ══════════ -->
+  <div class="page active" id="page-overview">
+    <div class="section-title"><span>SYSTEM DASHBOARD</span> <small>ADMIN v3.0</small></div>
+
+    <div class="grid-4" style="margin-bottom:20px">
+      <div class="stat-card panel">
+        <div class="val" id="statTotalPlayers">—</div>
+        <div class="lbl">TOTAL PLAYERS</div>
+      </div>
+      <div class="stat-card panel">
+        <div class="val gold" id="statTotalGold">—</div>
+        <div class="lbl">TOTAL GOLD IN GAME</div>
+      </div>
+      <div class="stat-card panel">
+        <div class="val green" id="statMaxLevel">—</div>
+        <div class="lbl">HIGHEST LEVEL</div>
+      </div>
+      <div class="stat-card panel">
+        <div class="val red" id="statBanned">—</div>
+        <div class="lbl">BANNED ACCOUNTS</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-title">RANK DISTRIBUTION</div>
+        <div id="rankDistribution">Loading...</div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">RECENT ACTIVITY</div>
+        <div id="recentActivity" style="font-family:'Share Tech Mono',monospace;font-size:11px;line-height:1.8;color:rgba(0,245,255,0.6)">Loading...</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">TOP 5 LEADERBOARD</div>
+      <div id="overviewLeaderboard">Loading...</div>
+    </div>
+  </div>
+
+  <!-- ══════════ ALL PLAYERS ══════════ -->
+  <div class="page" id="page-players">
+    <div class="section-title"><span>ALL PLAYERS</span></div>
+    <div class="search-bar">
+      <input type="text" id="playerSearchInput" placeholder="Search by name, email, UID..." oninput="filterPlayers()">
+      <select id="rankFilter" onchange="filterPlayers()" style="width:auto;min-width:100px">
+        <option value="">ALL RANKS</option>
+        <option value="E">E</option>
+        <option value="D">D</option>
+        <option value="C">C</option>
+        <option value="B">B</option>
+        <option value="A">A</option>
+        <option value="S">S</option>
+      </select>
+      <button class="btn btn-sm" onclick="loadAllPlayers()">🔄 REFRESH</button>
+    </div>
+    <div id="allPlayersList">
+      <div style="text-align:center;padding:40px;color:rgba(0,245,255,0.3);font-family:'Share Tech Mono',monospace">Loading players...</div>
+    </div>
+  </div>
+
+  <!-- ══════════ PLAYER EDITOR ══════════ -->
+  <div class="page" id="page-editor">
+    <div class="section-title"><span>PLAYER EDITOR</span></div>
+
+    <div class="panel">
+      <div class="panel-title">LOAD PLAYER</div>
+      <div class="search-bar">
+        <input type="text" id="uidInput" placeholder="Enter Player UID...">
+        <button class="btn" onclick="loadPlayer()">⚡ LOAD</button>
+      </div>
+    </div>
+
+    <div id="editorContent" style="display:none">
+      <!-- Identity -->
+      <div class="panel">
+        <div class="panel-title">IDENTITY</div>
+        <div class="grid-2">
+          <div>
+            <label>Display Name</label>
+            <input type="text" id="displayName">
+          </div>
+          <div>
+            <label>Rank</label>
+            <select id="rank">
+              <option>E</option><option>D</option><option>C</option>
+              <option>B</option><option>A</option><option>S</option>
+            </select>
+          </div>
+          <div>
+            <label>Level</label>
+            <input id="level" type="number" min="1" max="999">
+          </div>
+          <div>
+            <label>Title</label>
+            <input type="text" id="playerTitle">
+          </div>
+        </div>
+      </div>
+
+      <!-- Resources -->
+      <div class="panel">
+        <div class="panel-title">RESOURCES</div>
+        <div class="grid-3">
+          <div><label>Gold</label><input id="gold" type="number" min="0"></div>
+          <div><label>XP</label><input id="xp" type="number" min="0"></div>
+          <div><label>XP Max</label><input id="xpMax" type="number" min="1"></div>
+          <div><label>HP</label><input id="hp" type="number" min="0"></div>
+          <div><label>HP Max</label><input id="hpMax" type="number" min="1"></div>
+          <div><label>Stat Points</label><input id="statPoints" type="number" min="0"></div>
+          <div><label>MP</label><input id="mp" type="number" min="0"></div>
+          <div><label>MP Max</label><input id="mpMax" type="number" min="1"></div>
+          <div><label>Streak (Login Days)</label><input id="streak" type="number" min="0"></div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="panel">
+        <div class="panel-title">BASE STATS</div>
+        <div class="grid-3">
+          <div><label>Strength</label><input id="stat_strength" type="number" min="0"></div>
+          <div><label>Agility</label><input id="stat_agility" type="number" min="0"></div>
+          <div><label>Intelligence</label><input id="stat_intelligence" type="number" min="0"></div>
+          <div><label>Vitality</label><input id="stat_vitality" type="number" min="0"></div>
+          <div><label>Perception</label><input id="stat_perception" type="number" min="0"></div>
+          <div><label>Luck</label><input id="stat_luck" type="number" min="0"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="savePlayer()">💾 SAVE ALL CHANGES</button>
+        <button class="btn" onclick="resetPlayerXP()">🔄 RECALCULATE XP MAX</button>
+        <button class="btn btn-gold" onclick="navigate('rewards')">🎁 GIVE REWARD</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ REWARDS ══════════ -->
+  <div class="page" id="page-rewards">
+    <div class="section-title"><span>GIVE REWARDS</span></div>
+
+    <div class="panel">
+      <div class="panel-title">TARGET PLAYER</div>
+      <div class="search-bar">
+        <input type="text" id="rewardUID" placeholder="Player UID...">
+        <button class="btn btn-sm" onclick="loadRewardTarget()">LOAD</button>
+      </div>
+      <div id="rewardTargetInfo" style="display:none;margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,245,255,0.6)"></div>
+    </div>
+
+    <div class="grid-2">
+      <!-- Gold/XP Rewards -->
+      <div class="panel gold-panel">
+        <div class="panel-title">💰 CURRENCY & EXPERIENCE</div>
+        <label>Gold Amount</label>
+        <input type="number" id="rewardGold" value="0" min="0" placeholder="0">
+        <label>XP Amount</label>
+        <input type="number" id="rewardXP" value="0" min="0" placeholder="0">
+        <label>Stat Points</label>
+        <input type="number" id="rewardStatPoints" value="0" min="0" placeholder="0">
+        <button class="btn btn-gold btn-full" style="margin-top:12px" onclick="giveGoldXP()">⚡ GRANT GOLD / XP</button>
+      </div>
+
+      <!-- Rank Reward -->
+      <div class="panel">
+        <div class="panel-title">⚔ RANK & LEVEL</div>
+        <label>Set New Rank</label>
+        <select id="rewardRank">
+          <option value="">-- No Change --</option>
+          <option value="E">E Rank</option>
+          <option value="D">D Rank</option>
+          <option value="C">C Rank</option>
+          <option value="B">B Rank</option>
+          <option value="A">A Rank</option>
+          <option value="S">S Rank</option>
+        </select>
+        <label>Set Level To</label>
+        <input type="number" id="rewardLevel" value="" min="1" max="999" placeholder="Leave blank for no change">
+        <label>Add Levels (+)</label>
+        <input type="number" id="rewardAddLevels" value="0" min="0" placeholder="0">
+        <button class="btn btn-full" style="margin-top:12px" onclick="giveRankLevel()">⚡ APPLY RANK/LEVEL</button>
+      </div>
+    </div>
+
+    <!-- Quick Reward Presets -->
+    <div class="panel">
+      <div class="panel-title">🎁 QUICK REWARD PRESETS</div>
+      <div class="reward-chip-grid">
+        <div class="reward-chip" onclick="applyPreset('newbie')">🌱 NEWBIE BOOST<br><small style="opacity:.6">+500G +200XP</small></div>
+        <div class="reward-chip" onclick="applyPreset('weekly')">📅 WEEKLY REWARD<br><small style="opacity:.6">+2000G +1000XP</small></div>
+        <div class="reward-chip" onclick="applyPreset('event')">🎉 EVENT REWARD<br><small style="opacity:.6">+5000G +5000XP</small></div>
+        <div class="reward-chip" onclick="applyPreset('top3')">🥇 TOP PLAYER<br><small style="opacity:.6">+10000G +10000XP</small></div>
+        <div class="reward-chip" onclick="applyPreset('apology')">🙏 APOLOGY GIFT<br><small style="opacity:.6">+3000G +2000XP +5SP</small></div>
+        <div class="reward-chip" onclick="applyPreset('rankup')">📈 RANK UP KIT<br><small style="opacity:.6">+1000G +500XP +10SP</small></div>
+      </div>
+    </div>
+
+    <!-- Item / Inventory Reward -->
+    <div class="panel">
+      <div class="panel-title">🎒 GIVE ITEM</div>
+      <div class="grid-2">
+        <div>
+          <label>Item ID</label>
+          <select id="rewardItemId">
+            <option value="">-- Select Item --</option>
+            <optgroup label="Consumables">
+              <option value="hp_potion">HP Potion (Small)</option>
+              <option value="hp_potion_med">HP Potion (Medium)</option>
+              <option value="mp_potion">MP Potion</option>
+              <option value="elixir">Elixir (+5 STR)</option>
+              <option value="agility_crystal">Agility Crystal (+5 AGI)</option>
+              <option value="int_crystal">Intelligence Crystal (+5 INT)</option>
+              <option value="xp_scroll">XP Scroll (+500 XP)</option>
+            </optgroup>
+            <optgroup label="Weapons">
+              <option value="iron_sword">Iron Sword</option>
+              <option value="dark_blade">Dark Blade</option>
+              <option value="shadow_dagger">Shadow Dagger</option>
+              <option value="crystal_staff">Crystal Staff</option>
+            </optgroup>
+            <optgroup label="Armor">
+              <option value="leather_armor">Leather Armor</option>
+              <option value="shadow_cloak">Shadow Cloak</option>
+              <option value="mana_robe">Mana Robe</option>
+            </optgroup>
+            <optgroup label="Special">
+              <option value="admin_gift_box">🎁 Admin Gift Box</option>
+              <option value="legendary_artifact">⭐ Legendary Artifact</option>
+            </optgroup>
+          </select>
+        </div>
+        <div>
+          <label>Quantity</label>
+          <input type="number" id="rewardItemQty" value="1" min="1" max="99">
+        </div>
+      </div>
+      <button class="btn btn-purple btn-full" style="margin-top:12px" onclick="giveItem()">📦 ADD ITEM TO INVENTORY</button>
+    </div>
+
+    <!-- Broadcast with reward -->
+    <div class="panel">
+      <div class="panel-title">📢 REWARD WITH ANNOUNCEMENT</div>
+      <label>Custom Announcement Message</label>
+      <textarea id="rewardAnnounce" placeholder="Optional: announce this reward to the player..."></textarea>
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="giveAllRewards()">⚡ GRANT ALL REWARDS</button>
+        <button class="btn btn-sm" onclick="clearRewardForm()">🗑 CLEAR FORM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ INVENTORY ══════════ -->
+  <div class="page" id="page-inventory">
+    <div class="section-title"><span>INVENTORY EDITOR</span></div>
+
+    <div class="panel">
+      <div class="panel-title">LOAD PLAYER INVENTORY</div>
+      <div class="search-bar">
+        <input type="text" id="invUID" placeholder="Player UID...">
+        <button class="btn btn-sm" onclick="loadInventory()">LOAD</button>
+      </div>
+    </div>
+
+    <div id="inventoryEditorContent" style="display:none">
+      <div class="panel">
+        <div class="panel-title">CURRENT INVENTORY</div>
+        <div id="invItemList"></div>
+        <div class="divider"></div>
+        <button class="btn btn-red btn-sm" onclick="clearInventory()">🗑 CLEAR ALL ITEMS</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">ADD CUSTOM ITEM</div>
+        <div class="grid-3">
+          <div><label>Item ID</label><input type="text" id="customItemId" placeholder="unique_id"></div>
+          <div><label>Name</label><input type="text" id="customItemName" placeholder="Item Name"></div>
+          <div><label>Icon (emoji)</label><input type="text" id="customItemIcon" placeholder="⚔"></div>
+          <div>
+            <label>Rarity</label>
+            <select id="customItemRarity">
+              <option value="common">Common</option>
+              <option value="uncommon">Uncommon</option>
+              <option value="rare">Rare</option>
+              <option value="epic">Epic</option>
+              <option value="legendary">Legendary</option>
+            </select>
+          </div>
+          <div>
+            <label>Type</label>
+            <select id="customItemType">
+              <option value="weapon">Weapon</option>
+              <option value="armor">Armor</option>
+              <option value="consumable">Consumable</option>
+              <option value="special">Special</option>
+            </select>
+          </div>
+          <div><label>Quantity</label><input type="number" id="customItemQty" value="1" min="1"></div>
+        </div>
+        <button class="btn btn-green btn-full" style="margin-top:12px" onclick="addCustomItem()">➕ ADD ITEM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ TITLES ══════════ -->
+  <div class="page" id="page-titles">
+    <div class="section-title"><span>TITLES & BADGES</span></div>
+
+    <div class="panel">
+      <div class="panel-title">LOAD PLAYER</div>
+      <div class="search-bar">
+        <input type="text" id="titleUID" placeholder="Player UID...">
+        <button class="btn btn-sm" onclick="loadTitleTarget()">LOAD</button>
+      </div>
+      <div id="titleTargetInfo" style="display:none;margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,245,255,0.5)"></div>
+    </div>
+
+    <div id="titlesContent" style="display:none">
+      <div class="panel gold-panel">
+        <div class="panel-title">ASSIGN TITLE</div>
+        <label>Current Title</label>
+        <input type="text" id="currentTitle" placeholder="Player's current title">
+        <div class="divider"></div>
+        <div class="panel-title">QUICK TITLES</div>
+        <div class="reward-chip-grid" id="titleChipGrid">
+          <div class="title-chip" onclick="selectTitle('Ordinary Human')">Ordinary Human</div>
+          <div class="title-chip" onclick="selectTitle('Awakened One')">Awakened One</div>
+          <div class="title-chip" onclick="selectTitle('Shadow Sovereign')">Shadow Sovereign</div>
+          <div class="title-chip" onclick="selectTitle('Dragon Slayer')">Dragon Slayer</div>
+          <div class="title-chip" onclick="selectTitle('Dungeon Conqueror')">Dungeon Conqueror</div>
+          <div class="title-chip" onclick="selectTitle('Shadow Monarch')">Shadow Monarch</div>
+          <div class="title-chip" onclick="selectTitle('System Administrator')">System Administrator</div>
+          <div class="title-chip" onclick="selectTitle('Undefeated')">Undefeated</div>
+          <div class="title-chip" onclick="selectTitle('Hunter of Hunters')">Hunter of Hunters</div>
+          <div class="title-chip" onclick="selectTitle('Monarch of Death')">Monarch of Death</div>
+          <div class="title-chip" onclick="selectTitle('The One Who Stands Alone')">The One Who Stands Alone</div>
+          <div class="title-chip" onclick="selectTitle('Event Winner')">Event Winner</div>
+        </div>
+        <div class="divider"></div>
+        <button class="btn btn-gold btn-full" onclick="saveTitle()">👑 APPLY TITLE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ SKILLS ══════════ -->
+  <div class="page" id="page-skills">
+    <div class="section-title"><span>SKILLS EDITOR</span></div>
+
+    <div class="panel">
+      <div class="panel-title">LOAD PLAYER</div>
+      <div class="search-bar">
+        <input type="text" id="skillUID" placeholder="Player UID...">
+        <button class="btn btn-sm" onclick="loadSkillTarget()">LOAD</button>
+      </div>
+    </div>
+
+    <div id="skillsContent" style="display:none">
+      <div class="panel">
+        <div class="panel-title">SKILL LEVELS</div>
+        <div class="grid-3" id="skillInputGrid"></div>
+        <div class="divider"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="saveSkills()">💾 SAVE SKILLS</button>
+          <button class="btn btn-sm" onclick="maxAllSkills()">⭐ MAX ALL</button>
+          <button class="btn btn-red btn-sm" onclick="resetAllSkills()">🔄 RESET ALL</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">ADD CUSTOM SKILL</div>
+        <div class="grid-2">
+          <div><label>Skill ID</label><input type="text" id="newSkillId" placeholder="skill_id"></div>
+          <div><label>Skill Name</label><input type="text" id="newSkillName" placeholder="Skill Name"></div>
+          <div><label>Icon (emoji)</label><input type="text" id="newSkillIcon" placeholder="⚡"></div>
+          <div><label>Level</label><input type="number" id="newSkillLevel" value="1" min="1" max="100"></div>
+        </div>
+        <button class="btn btn-full" style="margin-top:12px" onclick="addCustomSkill()">➕ ADD SKILL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ QUESTS ══════════ -->
+  <div class="page" id="page-quests">
+    <div class="section-title"><span>QUEST OVERRIDE</span></div>
+
+    <div class="panel">
+      <div class="panel-title">LOAD PLAYER</div>
+      <div class="search-bar">
+        <input type="text" id="questUID" placeholder="Player UID...">
+        <button class="btn btn-sm" onclick="loadQuestTarget()">LOAD</button>
+      </div>
+    </div>
+
+    <div id="questsContent" style="display:none">
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-title">DAILY QUESTS</div>
+          <div id="dailyQuestOverrides"></div>
+          <button class="btn btn-green btn-full" style="margin-top:12px" onclick="saveQuestOverride('daily')">SAVE DAILY</button>
+          <button class="btn btn-red btn-full btn-sm" style="margin-top:6px" onclick="resetQuests('daily')">RESET ALL DAILY</button>
+        </div>
+        <div class="panel">
+          <div class="panel-title">WEEKLY QUESTS</div>
+          <div id="weeklyQuestOverrides"></div>
+          <button class="btn btn-green btn-full" style="margin-top:12px" onclick="saveQuestOverride('weekly')">SAVE WEEKLY</button>
+          <button class="btn btn-red btn-full btn-sm" style="margin-top:6px" onclick="resetQuests('weekly')">RESET ALL WEEKLY</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ ACHIEVEMENTS ══════════ -->
+  <div class="page" id="page-achievements">
+    <div class="section-title"><span>ACHIEVEMENT CONTROL</span></div>
+
+    <div class="panel">
+      <div class="panel-title">LOAD PLAYER</div>
+      <div class="search-bar">
+        <input type="text" id="achUID" placeholder="Player UID...">
+        <button class="btn btn-sm" onclick="loadAchTarget()">LOAD</button>
+      </div>
+    </div>
+
+    <div id="achContent" style="display:none">
+      <div class="panel">
+        <div class="panel-title">ACHIEVEMENTS</div>
+        <div class="grid-2" id="achCheckboxGrid"></div>
+        <div class="divider"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-gold" onclick="saveAchievements()">💾 SAVE ACHIEVEMENTS</button>
+          <button class="btn btn-sm" onclick="unlockAllAch()">⭐ UNLOCK ALL</button>
+          <button class="btn btn-red btn-sm" onclick="lockAllAch()">🔒 LOCK ALL</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ BROADCAST ══════════ -->
+  <div class="page" id="page-broadcast">
+    <div class="section-title"><span>BROADCAST</span></div>
+
+    <div class="panel">
+      <div class="panel-title">SYSTEM ANNOUNCEMENT</div>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,245,255,0.5);margin-bottom:12px">
+        Broadcasts are stored in Firestore and displayed to all players on their next login or refresh.
+      </p>
+
+      <label>Message Title</label>
+      <input type="text" id="broadTitle" placeholder="[SYSTEM] Important Notice...">
+
+      <label>Message Body</label>
+      <textarea id="broadBody" rows="4" placeholder="Enter your broadcast message..."></textarea>
+
+      <label>Type</label>
+      <select id="broadType">
+        <option value="info">📢 Info</option>
+        <option value="event">🎉 Event</option>
+        <option value="maintenance">🔧 Maintenance</option>
+        <option value="reward">🎁 Reward Notification</option>
+        <option value="warning">⚠️ Warning</option>
+        <option value="emergency">🚨 Emergency</option>
+      </select>
+
+      <label>Expiry (hours from now)</label>
+      <input type="number" id="broadExpiry" value="24" min="1" max="720">
+
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="sendBroadcast()">📢 SEND BROADCAST</button>
+        <button class="btn btn-red btn-sm" onclick="clearBroadcasts()">🗑 CLEAR ALL BROADCASTS</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">ACTIVE BROADCASTS</div>
+      <div id="activeBroadcasts" style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,245,255,0.5)">Loading...</div>
+    </div>
+  </div>
+
+  <!-- ══════════ LOGS ══════════ -->
+  <div class="page" id="page-logs">
+    <div class="section-title"><span>ADMIN LOGS</span></div>
+
+    <div class="panel">
+      <div class="panel-title">ACTION HISTORY (THIS SESSION)</div>
+      <div style="overflow-x:auto">
+        <table class="log-table" id="adminLogTable">
+          <thead>
+            <tr>
+              <th>TIME</th>
+              <th>ACTION</th>
+              <th>TARGET UID</th>
+              <th>DETAILS</th>
+            </tr>
+          </thead>
+          <tbody id="adminLogBody">
+            <tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(0,245,255,0.3)">No actions logged yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-red btn-sm" onclick="clearLogs()">🗑 CLEAR SESSION LOGS</button>
+        <button class="btn btn-sm" onclick="exportLogs()" style="margin-left:8px">📥 EXPORT CSV</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ MAINTENANCE ══════════ -->
+  <div class="page" id="page-maintenance">
+    <div class="section-title"><span>MAINTENANCE</span></div>
+
+    <div class="panel">
+      <div class="panel-title">SYSTEM TOOLS</div>
+      <div class="grid-2">
+        <div class="panel" style="padding:14px">
+          <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;margin-bottom:8px">🔄 RESET DAILY QUESTS</div>
+          <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,245,255,0.5);margin-bottom:10px">Clears all daily quest progress for every player.</p>
+          <button class="btn btn-orange btn-full" onclick="confirmAction('resetAllDailyQuests', 'Reset ALL daily quests for ALL players?')">RESET ALL DAILY QUESTS</button>
+        </div>
+        <div class="panel" style="padding:14px">
+          <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;margin-bottom:8px">📅 RESET WEEKLY QUESTS</div>
+          <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,245,255,0.5);margin-bottom:10px">Clears all weekly quest progress for every player.</p>
+          <button class="btn btn-orange btn-full" onclick="confirmAction('resetAllWeeklyQuests', 'Reset ALL weekly quests for ALL players?')">RESET ALL WEEKLY QUESTS</button>
+        </div>
+        <div class="panel" style="padding:14px">
+          <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;margin-bottom:8px">🏆 RECALCULATE LEADERBOARD</div>
+          <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,245,255,0.5);margin-bottom:10px">Re-sorts and validates all leaderboard data.</p>
+          <button class="btn btn-full" onclick="toast('Leaderboard data is always live from Firestore.','warn')">LEADERBOARD IS LIVE</button>
+        </div>
+        <div class="panel" style="padding:14px">
+          <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;margin-bottom:8px">📢 CLEAR BROADCASTS</div>
+          <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,245,255,0.5);margin-bottom:10px">Deletes all active system broadcasts.</p>
+          <button class="btn btn-red btn-full" onclick="clearBroadcasts()">CLEAR ALL BROADCASTS</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">BULK GOLD GRANT</div>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,245,255,0.5);margin-bottom:10px">Grant gold to ALL players at once (e.g. event reward)</p>
+      <div class="grid-2">
+        <div><label>Gold Amount (each player)</label><input type="number" id="bulkGold" value="0" min="0"></div>
+        <div><label>XP Amount (each player)</label><input type="number" id="bulkXP" value="0" min="0"></div>
+      </div>
+      <button class="btn btn-gold" style="margin-top:12px" onclick="confirmAction('bulkGrantGoldXP', 'Give gold + XP to ALL players?')">💰 BULK GRANT TO ALL PLAYERS</button>
+    </div>
+  </div>
+
+  <!-- ══════════ DANGER ZONE ══════════ -->
+  <div class="page" id="page-danger">
+    <div class="section-title"><span style="color:var(--red);text-shadow:0 0 15px rgba(255,68,68,0.6)">☠ DANGER ZONE</span></div>
+
+    <div class="panel danger-panel">
+      <div class="panel-title" style="color:var(--red)">⚠ IRREVERSIBLE ACTIONS</div>
+      <p style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,68,68,0.6);margin-bottom:16px">
+        All actions in this section are permanent and cannot be undone. Proceed with extreme caution.
+      </p>
+
+      <div class="search-bar">
+        <input type="text" id="dangerUID" placeholder="Player UID for targeted actions...">
+        <button class="btn btn-sm" onclick="loadDangerTarget()">LOAD</button>
+      </div>
+      <div id="dangerTargetInfo" style="margin-bottom:12px;font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,68,68,0.6)"></div>
+
+      <div class="grid-2">
+        <!-- Ban -->
+        <div class="panel" style="padding:14px;border-color:rgba(255,68,68,0.3)">
+          <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--red);margin-bottom:8px">🚫 BAN PLAYER</div>
+          <label>Ban Reason</label>
+          <input type="text" id="banReason" placeholder="Reason for ban...">
+          <button class="btn btn-red btn-full" style="margin-top:10px" onclick="banPlayer()">BAN PLAYER</button>
+        </div>
+
+        <!-- Unban -->
+        <div class="panel" style="padding:14px;border-color:rgba(255,136,0,0.3)">
+          <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--orange);margin-bottom:8px">✅ UNBAN PLAYER</div>
+          <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,136,0,0.6);margin-bottom:10px">Remove ban status from the loaded player.</p>
+          <button class="btn btn-orange btn-full" onclick="unbanPlayer()">UNBAN PLAYER</button>
+        </div>
+
+        <!-- Reset Player Data -->
+        <div class="panel" style="padding:14px;border-color:rgba(255,68,68,0.3)">
+          <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--red);margin-bottom:8px">🔄 RESET PLAYER DATA</div>
+          <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,68,68,0.6);margin-bottom:10px">Reset player to fresh E-rank state. Stats, gold, XP, skills, inventory — all wiped.</p>
+          <button class="btn btn-red btn-full" onclick="confirmAction('resetPlayerData', 'RESET all progress for this player? This CANNOT be undone.')">RESET ALL PROGRESS</button>
+        </div>
+
+        <!-- Delete Document -->
+        <div class="panel" style="padding:14px;border-color:rgba(255,68,68,0.5)">
+          <div style="font-family:'Orbitron',monospace;font-size:12px;color:var(--red);margin-bottom:8px">🗑 DELETE PLAYER DOC</div>
+          <p style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,68,68,0.6);margin-bottom:10px">Permanently delete the Firestore document for this player. Auth account remains.</p>
+          <label>Type "DELETE" to confirm</label>
+          <input type="text" id="deleteConfirmInput" placeholder='Type DELETE'>
+          <button class="btn btn-red btn-full" style="margin-top:10px" onclick="deletePlayerDoc()">PERMANENTLY DELETE</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div> <!-- end main-content -->
+
+<!-- ─── CONFIRM MODAL ─── -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-title">⚠ CONFIRM ACTION</div>
+    <p id="confirmModalText" style="font-family:'Share Tech Mono',monospace;font-size:12px;color:rgba(255,68,68,0.8);line-height:1.6"></p>
+    <div class="modal-actions">
+      <button class="btn btn-red" id="confirmModalYes">CONFIRM</button>
+      <button class="btn" onclick="closeModal()">CANCEL</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── TOAST CONTAINER ─── -->
+<div id="toastContainer"></div>
+
+<!-- ─── SYSTEM FOOTER ─── -->
+<div id="systemFooter">
+  &copy; 2026 SOLO LEVELING — AMEEN
+  <span>ADMIN PANEL v3.0</span>
+</div>
+
+<!-- ─── FIREBASE + SCRIPTS ─── -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore, doc, getDoc, updateDoc, setDoc, deleteDoc,
+  collection, getDocs, addDoc, query, orderBy, limit, serverTimestamp, writeBatch, where
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+// ─── Firebase Config ─── USE YOUR OWN CONFIG HERE
+const firebaseConfig = {
+  apiKey: "AIzaSyAPP2o5T7jl-9LGpVRKJripfMvdpuEEK50",
+  authDomain: "soulkart-a8200.firebaseapp.com",
+  projectId: "soulkart-a8200",
+  storageBucket: "soulkart-a8200.firebasestorage.app",
+  messagingSenderId: "715711006853",
+  appId: "1:715711006853:web:b0765bca24dd583426c1ec"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+/* 🔒 ADMIN ACCESS LOCK */
+
+onAuthStateChanged(auth, async (user) => {
+
+if (!user) {
+
+window.location.href = "login.html";
+return;
+
+}
+
+try {
+
+const ref =
+doc(db, "users", user.uid);
+
+const snap =
+await getDoc(ref);
+
+if (!snap.exists()) {
+
+window.location.href = "system.html";
+return;
+
+}
+
+const data =
+snap.data();
+
+if (data.admin !== true) {
+
+console.warn("Access denied — not admin");
+
+window.location.href = "system.html";
+
+return;
+
+}
+
+/* 👑 Admin verified */
+console.log("Admin access granted");
+
+} catch (err) {
+
+console.error("Admin check error:", err);
+
+window.location.href = "system.html";
+
+}
+
+});
+
+// ─── SESSION LOG ───
+const sessionLogs = [];
+
+// ─── GLOBAL STATE ───
+let currentUID = null;
+let currentPlayerData = null;
+let allPlayers = [];
+let dangerUID = null;
+let rewardUID_state = null;
+let invUID_state = null;
+let titleUID_state = null;
+let skillUID_state = null;
+let questUID_state = null;
+let achUID_state = null;
+let pendingAction = null;
+
+// ─── ITEM DEFINITIONS ───
+const ITEM_DEFS = {
+  hp_potion:      { name:'HP Potion (Small)',    icon:'🧪', type:'consumable', rarity:'common',    effect:'hp',   value:50 },
+  hp_potion_med:  { name:'HP Potion (Medium)',   icon:'🧪', type:'consumable', rarity:'uncommon',  effect:'hp',   value:150 },
+  mp_potion:      { name:'MP Potion',            icon:'💧', type:'consumable', rarity:'common',    effect:'mp',   value:50 },
+  elixir:         { name:'Elixir',               icon:'✨', type:'consumable', rarity:'rare',      effect:'stat', stat:'strength', value:5 },
+  agility_crystal:{ name:'Agility Crystal',      icon:'💎', type:'consumable', rarity:'rare',      effect:'stat', stat:'agility',  value:5 },
+  int_crystal:    { name:'Intelligence Crystal', icon:'🔮', type:'consumable', rarity:'rare',      effect:'stat', stat:'intelligence', value:5 },
+  xp_scroll:      { name:'XP Scroll',            icon:'📜', type:'consumable', rarity:'uncommon',  effect:'xp',   value:500 },
+  iron_sword:     { name:'Iron Sword',           icon:'⚔', type:'weapon',     rarity:'common',    stats:{ strength:3, agility:1 } },
+  dark_blade:     { name:'Dark Blade',           icon:'🗡', type:'weapon',     rarity:'rare',      stats:{ strength:8, agility:4 } },
+  shadow_dagger:  { name:'Shadow Dagger',        icon:'🔪', type:'weapon',     rarity:'epic',      stats:{ agility:10, luck:5 } },
+  crystal_staff:  { name:'Crystal Staff',        icon:'🪄', type:'weapon',     rarity:'epic',      stats:{ intelligence:12, luck:3 } },
+  leather_armor:  { name:'Leather Armor',        icon:'🛡', type:'armor',      rarity:'common',    stats:{ vitality:3 } },
+  shadow_cloak:   { name:'Shadow Cloak',         icon:'🧥', type:'armor',      rarity:'rare',      stats:{ agility:6, luck:4 } },
+  mana_robe:      { name:'Mana Robe',            icon:'👘', type:'armor',      rarity:'epic',      stats:{ intelligence:8, vitality:4 } },
+  admin_gift_box: { name:'Admin Gift Box',       icon:'🎁', type:'special',    rarity:'legendary' },
+  legendary_artifact:{ name:'Legendary Artifact',icon:'⭐', type:'special',   rarity:'legendary', stats:{ strength:15, agility:10, intelligence:10, luck:10 } }
+};
+
+const ALL_SKILLS = [
+  { id:'power_strike',   name:'Power Strike',   icon:'⚔' },
+  { id:'arcane_mind',    name:'Arcane Mind',    icon:'🧠' },
+  { id:'shadow_step',    name:'Shadow Step',    icon:'👤' },
+  { id:'iron_skin',      name:'Iron Skin',      icon:'🛡' },
+  { id:'critical_eye',   name:'Critical Eye',   icon:'👁' },
+  { id:'healing_aura',   name:'Healing Aura',   icon:'💚' },
+  { id:'berserker',      name:'Berserker',      icon:'🔥' },
+  { id:'mana_surge',     name:'Mana Surge',     icon:'💙' },
+  { id:'shadow_realm',   name:'Shadow Realm',   icon:'🌑' },
+  { id:'dominators_touch',name:"Dominator's Touch",icon:'✊'},
+];
+
+const ALL_ACHIEVEMENTS = [
+  'first_login','first_quest','level_5','level_10','level_20','level_50',
+  'rank_d','rank_c','rank_b','rank_a','rank_s',
+  'gold_1000','gold_10000','gold_100000',
+  'kill_100','kill_500','kill_1000',
+  '7_day_streak','30_day_streak',
+  'first_purchase','collector','legend'
+];
+
+const DAILY_QUEST_IDS = ['kill10','run5km','complete_dungeon','meditate','study1hr','pushups'];
+const WEEKLY_QUEST_IDS = ['kill100','run30km','complete5dungeons','level_up','earn5000gold'];
+
+// ─── TOAST ───
+window.toast = function(msg, type = '') {
+  const c = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  c.appendChild(el);
+  setTimeout(() => el.remove(), 4200);
+};
+
+// ─── LOG ───
+function addLog(action, uid, details) {
+  sessionLogs.unshift({ time: new Date().toLocaleTimeString(), action, uid: uid || '—', details });
+  renderLogs();
+}
+
+function renderLogs() {
+  const tbody = document.getElementById('adminLogBody');
+  if (!tbody) return;
+  if (!sessionLogs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:rgba(0,245,255,0.3)">No actions logged yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = sessionLogs.map(l =>
+    `<tr><td>${l.time}</td><td>${l.action}</td><td style="font-size:10px;opacity:.6">${l.uid.substring(0,16)}...</td><td>${l.details}</td></tr>`
+  ).join('');
+}
+
+window.clearLogs = function() {
+  sessionLogs.length = 0;
+  renderLogs();
+  toast('Session logs cleared', 'warn');
+};
+
+window.exportLogs = function() {
+  const csv = ['TIME,ACTION,UID,DETAILS',...sessionLogs.map(l => `"${l.time}","${l.action}","${l.uid}","${l.details}"`)].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv,' + encodeURIComponent(csv);
+  a.download = 'admin_logs.csv';
+  a.click();
+};
+
+// ─── NAVIGATION ───
+window.navigate = function(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const p = document.getElementById('page-' + page);
+  if (p) p.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const found = Array.from(document.querySelectorAll('.nav-item')).find(n => n.getAttribute('onclick')?.includes("'"+page+"'"));
+  if (found) found.classList.add('active');
+  if (page === 'overview') loadOverview();
+  if (page === 'players') loadAllPlayers();
+  if (page === 'broadcast') loadBroadcasts();
+  if (window.innerWidth <= 768) closeSidebar();
+};
+
+// ─── SIDEBAR ───
+window.toggleSidebar = function() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('active');
+};
+window.closeSidebar = function() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('active');
+};
+
+// ─── CONFIRM MODAL ───
+window.confirmAction = function(action, text) {
+  pendingAction = action;
+  document.getElementById('confirmModalText').textContent = text;
+  document.getElementById('confirmModal').classList.add('open');
+  document.getElementById('confirmModalYes').onclick = () => {
+    closeModal();
+    executeAction(action);
+  };
+};
+
+window.closeModal = function() {
+  document.getElementById('confirmModal').classList.remove('open');
+  pendingAction = null;
+};
+
+async function executeAction(action) {
+  if (action === 'resetAllDailyQuests') {
+    await bulkResetQuests('daily');
+  } else if (action === 'resetAllWeeklyQuests') {
+    await bulkResetQuests('weekly');
+  } else if (action === 'bulkGrantGoldXP') {
+    await bulkGrant();
+  } else if (action === 'resetPlayerData') {
+    await resetPlayerData();
+  }
+}
+
+// ─── OVERVIEW ───
+async function loadOverview() {
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    let total = 0, totalGold = 0, maxLevel = 0, banned = 0;
+    const rankCounts = { E:0, D:0, C:0, B:0, A:0, S:0 };
+    const players = [];
+
+    snap.forEach(d => {
+      const data = d.data();
+      total++;
+      totalGold += (data.gold || 0);
+      if ((data.level || 1) > maxLevel) maxLevel = data.level || 1;
+      if (data.banned) banned++;
+      if (rankCounts[data.rank] !== undefined) rankCounts[data.rank]++;
+      players.push({ name: data.displayName || data.name || 'Hunter', level: data.level || 1, rank: data.rank || 'E', uid: d.id });
+    });
+
+    document.getElementById('statTotalPlayers').textContent = total;
+    document.getElementById('statTotalGold').textContent = totalGold.toLocaleString() + 'G';
+    document.getElementById('statMaxLevel').textContent = 'LVL ' + maxLevel;
+    document.getElementById('statBanned').textContent = banned;
+    document.getElementById('onlineCount').textContent = total + ' REGISTERED';
+
+    // Rank distribution
+    const rdEl = document.getElementById('rankDistribution');
+    rdEl.innerHTML = Object.entries(rankCounts).map(([rank, count]) => {
+      const pct = total ? Math.round(count/total*100) : 0;
+      return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span class="rank-badge rank-${rank}" style="font-size:11px;min-width:28px;text-align:center">${rank}</span>
+        <div style="flex:1">
+          <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+        <span style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(0,245,255,0.5);min-width:40px">${count} (${pct}%)</span>
+      </div>`;
+    }).join('');
+
+    // Top 5
+    players.sort((a, b) => b.level - a.level);
+    const top5 = players.slice(0, 5);
+    document.getElementById('overviewLeaderboard').innerHTML = top5.map((p, i) => {
+      const medals = ['🥇','🥈','🥉','#4','#5'];
+      return `<div class="player-card" onclick="quickLoadPlayer('${p.uid}')">
+        <div style="font-family:'Orbitron',monospace;font-size:18px;width:30px">${medals[i]}</div>
+        <div class="player-avatar-sm">${(p.name||'S')[0]}</div>
+        <div class="player-info-col">
+          <div class="pname">${p.name}</div>
+          <div class="pmeta">LEVEL ${p.level}</div>
+        </div>
+        <div class="rank-badge rank-${p.rank}">${p.rank}</div>
+      </div>`;
+    }).join('');
+
+    // Recent activity placeholder
+    document.getElementById('recentActivity').innerHTML =
+      `✅ ${total} total players<br>💰 ${totalGold.toLocaleString()}G total gold<br>🏆 Highest level: ${maxLevel}<br>🚫 Banned accounts: ${banned}`;
+
+  } catch (e) {
+    console.error(e);
+    toast('Failed to load overview: ' + e.message, 'error');
+  }
+}
+
+// ─── ALL PLAYERS ───
+window.loadAllPlayers = async function() {
+  const el = document.getElementById('allPlayersList');
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:rgba(0,245,255,0.3);font-family:Share Tech Mono,monospace">Loading...</div>';
+  try {
+    const snap = await getDocs(collection(db, 'users'));
+    allPlayers = [];
+    snap.forEach(d => allPlayers.push({ ...d.data(), uid: d.id }));
+    renderPlayerList(allPlayers);
+  } catch (e) {
+    el.innerHTML = '<div style="color:var(--red);font-family:Share Tech Mono,monospace;padding:20px">' + e.message + '</div>';
+  }
+};
+
+function renderPlayerList(players) {
+  const el = document.getElementById('allPlayersList');
+  if (!players.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:rgba(0,245,255,0.3);font-family:Share Tech Mono,monospace">No players found</div>'; return; }
+  el.innerHTML = players.map(p => `
+    <div class="player-card" onclick="quickLoadPlayer('${p.uid}')">
+      <div class="player-avatar-sm">${(p.displayName || p.name || 'S')[0]}</div>
+      <div class="player-info-col">
+        <div class="pname">${p.displayName || p.name || 'Hunter'} ${p.banned ? '<span class="banned-indicator">🚫 BANNED</span>' : ''}</div>
+        <div class="pmeta">UID: ${p.uid.substring(0,12)}... • LVL ${p.level || 1} • ${p.gold || 0}G</div>
+      </div>
+      <div class="rank-badge rank-${p.rank || 'E'}">${p.rank || 'E'}</div>
+    </div>`).join('');
+}
+
+window.filterPlayers = function() {
+  const q = document.getElementById('playerSearchInput').value.toLowerCase();
+  const rank = document.getElementById('rankFilter').value;
+  const filtered = allPlayers.filter(p => {
+    const name = (p.displayName || p.name || '').toLowerCase();
+    const email = (p.email || '').toLowerCase();
+    const uid = (p.uid || '').toLowerCase();
+    const matchQ = !q || name.includes(q) || email.includes(q) || uid.includes(q);
+    const matchR = !rank || p.rank === rank;
+    return matchQ && matchR;
+  });
+  renderPlayerList(filtered);
+};
+
+window.quickLoadPlayer = function(uid) {
+  document.getElementById('uidInput').value = uid;
+  loadPlayer();
+  navigate('editor');
+};
+
+// ─── LOAD PLAYER ───
+window.loadPlayer = async function() {
+  const uid = document.getElementById('uidInput').value.trim();
+  if (!uid) { toast('Enter UID', 'error'); return; }
+  currentUID = uid;
+  document.getElementById('adminUIDBar').textContent = 'LOADED: ' + uid;
+
+  try {
+    const ref = doc(db, 'users', uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) { toast('Player not found', 'error'); return; }
+    currentPlayerData = snap.data();
+    const d = currentPlayerData;
+
+    document.getElementById('editorContent').style.display = 'block';
+    document.getElementById('displayName').value = d.displayName || d.name || '';
+    document.getElementById('rank').value = d.rank || 'E';
+    document.getElementById('level').value = d.level || 1;
+    document.getElementById('playerTitle').value = d.title || '';
+    document.getElementById('gold').value = d.gold || 0;
+    document.getElementById('xp').value = d.xp || 0;
+    document.getElementById('xpMax').value = d.xpMax || 100;
+    document.getElementById('hp').value = d.hp || 0;
+    document.getElementById('hpMax').value = d.hpMax || 100;
+    document.getElementById('mp').value = d.mp || 0;
+    document.getElementById('mpMax').value = d.mpMax || 50;
+    document.getElementById('statPoints').value = d.statPoints || 0;
+    document.getElementById('streak').value = d.streak?.login || 0;
+
+    const stats = d.stats || {};
+    ['strength','agility','intelligence','vitality','perception','luck'].forEach(s => {
+      const el = document.getElementById('stat_' + s);
+      if (el) el.value = stats[s] || 0;
+    });
+
+    toast('Player loaded: ' + (d.displayName || d.name || uid), 'success');
+    addLog('LOAD PLAYER', uid, d.displayName || d.name || 'Unknown');
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+    console.error(e);
+  }
+};
+
+// ─── SAVE PLAYER ───
+window.savePlayer = async function() {
+  if (!currentUID) { toast('Load a player first', 'error'); return; }
+  try {
+    const updatedData = {
+      displayName: document.getElementById('displayName').value,
+      name: document.getElementById('displayName').value,
+      rank: document.getElementById('rank').value,
+      level: Number(document.getElementById('level').value),
+      title: document.getElementById('playerTitle').value,
+      gold: Number(document.getElementById('gold').value),
+      xp: Number(document.getElementById('xp').value),
+      xpMax: Number(document.getElementById('xpMax').value),
+      hp: Number(document.getElementById('hp').value),
+      hpMax: Number(document.getElementById('hpMax').value),
+      mp: Number(document.getElementById('mp').value),
+      mpMax: Number(document.getElementById('mpMax').value),
+      statPoints: Number(document.getElementById('statPoints').value),
+      'streak.login': Number(document.getElementById('streak').value),
+      stats: {
+        strength: Number(document.getElementById('stat_strength').value),
+        agility: Number(document.getElementById('stat_agility').value),
+        intelligence: Number(document.getElementById('stat_intelligence').value),
+        vitality: Number(document.getElementById('stat_vitality').value),
+        perception: Number(document.getElementById('stat_perception').value),
+        luck: Number(document.getElementById('stat_luck').value),
+      }
+    };
+    await updateDoc(doc(db, 'users', currentUID), updatedData);
+    toast('Player updated successfully! 🔥', 'success');
+    addLog('SAVE PLAYER', currentUID, 'Full data saved');
+  } catch (e) {
+    toast('Error: ' + e.message, 'error');
+    console.error(e);
+  }
+};
+
+window.resetPlayerXP = function() {
+  const level = Number(document.getElementById('level').value) || 1;
+  const xpMax = Math.round(100 * Math.pow(1.15, level - 1));
+  document.getElementById('xpMax').value = xpMax;
+  toast('XP Max recalculated: ' + xpMax, 'success');
+};
+
+// ─── REWARDS ───
+window.loadRewardTarget = async function() {
+  const uid = document.getElementById('rewardUID').value.trim();
+  if (!uid) { toast('Enter UID', 'error'); return; }
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) { toast('Player not found', 'error'); return; }
+    rewardUID_state = uid;
+    const d = snap.data();
+    const infoEl = document.getElementById('rewardTargetInfo');
+    infoEl.style.display = 'block';
+    infoEl.innerHTML = `✅ ${d.displayName || d.name} — Rank ${d.rank || 'E'} — Level ${d.level || 1} — ${d.gold || 0}G`;
+    toast('Reward target: ' + (d.displayName || d.name), 'success');
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.applyPreset = function(preset) {
+  const presets = {
+    newbie:  { gold:500,   xp:200,  sp:0  },
+    weekly:  { gold:2000,  xp:1000, sp:0  },
+    event:   { gold:5000,  xp:5000, sp:0  },
+    top3:    { gold:10000, xp:10000,sp:0  },
+    apology: { gold:3000,  xp:2000, sp:5  },
+    rankup:  { gold:1000,  xp:500,  sp:10 }
+  };
+  const p = presets[preset];
+  if (!p) return;
+  document.getElementById('rewardGold').value = p.gold;
+  document.getElementById('rewardXP').value = p.xp;
+  document.getElementById('rewardStatPoints').value = p.sp;
+  toast('Preset loaded: ' + preset, 'success');
+};
+
+window.giveGoldXP = async function() {
+  if (!rewardUID_state) { toast('Load a player first', 'error'); return; }
+  const gold = Number(document.getElementById('rewardGold').value) || 0;
+  const xp = Number(document.getElementById('rewardXP').value) || 0;
+  const sp = Number(document.getElementById('rewardStatPoints').value) || 0;
+  try {
+    const snap = await getDoc(doc(db, 'users', rewardUID_state));
+    const d = snap.data();
+    const updates = {};
+    if (gold) updates.gold = (d.gold || 0) + gold;
+    if (xp) updates.xp = (d.xp || 0) + xp;
+    if (sp) updates.statPoints = (d.statPoints || 0) + sp;
+    await updateDoc(doc(db, 'users', rewardUID_state), updates);
+    toast(`Granted: +${gold}G +${xp}XP +${sp}SP`, 'gold');
+    addLog('GIVE REWARD', rewardUID_state, `+${gold}G +${xp}XP +${sp}SP`);
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.giveRankLevel = async function() {
+  if (!rewardUID_state) { toast('Load a player first', 'error'); return; }
+  const newRank = document.getElementById('rewardRank').value;
+  const setLevel = document.getElementById('rewardLevel').value;
+  const addLevels = Number(document.getElementById('rewardAddLevels').value) || 0;
+  try {
+    const snap = await getDoc(doc(db, 'users', rewardUID_state));
+    const d = snap.data();
+    const updates = {};
+    if (newRank) updates.rank = newRank;
+    if (setLevel) updates.level = Number(setLevel);
+    if (addLevels) updates.level = (d.level || 1) + addLevels;
+    if (Object.keys(updates).length === 0) { toast('No changes specified', 'warn'); return; }
+    await updateDoc(doc(db, 'users', rewardUID_state), updates);
+    toast('Rank/Level updated!', 'success');
+    addLog('RANK/LEVEL', rewardUID_state, JSON.stringify(updates));
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.giveItem = async function() {
+  if (!rewardUID_state) { toast('Load a player first', 'error'); return; }
+  const itemId = document.getElementById('rewardItemId').value;
+  const qty = Number(document.getElementById('rewardItemQty').value) || 1;
+  if (!itemId) { toast('Select an item', 'error'); return; }
+  const def = ITEM_DEFS[itemId];
+  if (!def) { toast('Item not found', 'error'); return; }
+  try {
+    const snap = await getDoc(doc(db, 'users', rewardUID_state));
+    const d = snap.data();
+    const inventory = d.inventory || [];
+    const existing = inventory.find(i => i.id === itemId);
+    if (existing) {
+      existing.qty = (existing.qty || 1) + qty;
+    } else {
+      inventory.push({ id:itemId, name:def.name, icon:def.icon, type:def.type, rarity:def.rarity, qty });
+    }
+    await updateDoc(doc(db, 'users', rewardUID_state), { inventory });
+    toast(`Item added: ${def.icon} ${def.name} x${qty}`, 'success');
+    addLog('GIVE ITEM', rewardUID_state, `${def.name} x${qty}`);
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.giveAllRewards = async function() {
+  await giveGoldXP();
+  await giveRankLevel();
+  await giveItem();
+  const announce = document.getElementById('rewardAnnounce').value.trim();
+  if (announce) {
+    await addDoc(collection(db, 'broadcasts'), {
+      title: '[REWARD]',
+      body: announce,
+      type: 'reward',
+      targetUID: rewardUID_state,
+      createdAt: serverTimestamp(),
+      expiresAt: new Date(Date.now() + 72 * 3600000)
+    });
+    toast('Announcement sent!', 'success');
+  }
+  toast('All rewards granted! 🎁', 'gold');
+};
+
+window.clearRewardForm = function() {
+  ['rewardGold','rewardXP','rewardStatPoints','rewardAddLevels'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = 0;
+  });
+  document.getElementById('rewardRank').value = '';
+  document.getElementById('rewardLevel').value = '';
+  document.getElementById('rewardAnnounce').value = '';
+  document.getElementById('rewardItemId').value = '';
+  document.getElementById('rewardItemQty').value = 1;
+  toast('Form cleared', 'warn');
+};
+
+// ─── INVENTORY ───
+window.loadInventory = async function() {
+  const uid = document.getElementById('invUID').value.trim();
+  if (!uid) { toast('Enter UID', 'error'); return; }
+  invUID_state = uid;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) { toast('Player not found', 'error'); return; }
+    const inv = snap.data().inventory || [];
+    document.getElementById('inventoryEditorContent').style.display = 'block';
+    renderInvEditor(inv);
+    toast('Inventory loaded', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+function renderInvEditor(inv) {
+  const el = document.getElementById('invItemList');
+  if (!inv.length) { el.innerHTML = '<div style="color:rgba(0,245,255,0.3);font-family:Share Tech Mono,monospace;padding:10px">Empty inventory</div>'; return; }
+  el.innerHTML = inv.map((item, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid rgba(0,245,255,0.06)">
+      <span style="font-size:18px">${item.icon || '📦'}</span>
+      <div style="flex:1;font-family:Share Tech Mono,monospace;font-size:11px">
+        ${item.name} <span style="color:var(--gold)">x${item.qty || 1}</span>
+        <span class="badge badge-cyan" style="margin-left:6px">${item.rarity || ''}</span>
+      </div>
+      <button class="btn btn-red btn-sm" onclick="removeItemByIndex(${i})">✕</button>
+    </div>`).join('');
+}
+
+window.removeItemByIndex = async function(idx) {
+  if (!invUID_state) return;
+  const snap = await getDoc(doc(db, 'users', invUID_state));
+  const inv = snap.data().inventory || [];
+  inv.splice(idx, 1);
+  await updateDoc(doc(db, 'users', invUID_state), { inventory: inv });
+  renderInvEditor(inv);
+  toast('Item removed', 'warn');
+  addLog('REMOVE ITEM', invUID_state, 'Index ' + idx);
+};
+
+window.clearInventory = async function() {
+  if (!invUID_state) return;
+  if (!confirm('Clear ALL items?')) return;
+  await updateDoc(doc(db, 'users', invUID_state), { inventory: [] });
+  renderInvEditor([]);
+  toast('Inventory cleared', 'warn');
+  addLog('CLEAR INVENTORY', invUID_state, 'All items removed');
+};
+
+window.addCustomItem = async function() {
+  if (!invUID_state) { toast('Load inventory first', 'error'); return; }
+  const id = document.getElementById('customItemId').value.trim();
+  const name = document.getElementById('customItemName').value.trim();
+  const icon = document.getElementById('customItemIcon').value.trim() || '📦';
+  const rarity = document.getElementById('customItemRarity').value;
+  const type = document.getElementById('customItemType').value;
+  const qty = Number(document.getElementById('customItemQty').value) || 1;
+  if (!id || !name) { toast('ID and Name required', 'error'); return; }
+  const snap = await getDoc(doc(db, 'users', invUID_state));
+  const inv = snap.data().inventory || [];
+  inv.push({ id, name, icon, rarity, type, qty });
+  await updateDoc(doc(db, 'users', invUID_state), { inventory: inv });
+  renderInvEditor(inv);
+  toast('Custom item added: ' + name, 'success');
+  addLog('ADD CUSTOM ITEM', invUID_state, name);
+};
+
+// ─── TITLES ───
+window.loadTitleTarget = async function() {
+  const uid = document.getElementById('titleUID').value.trim();
+  if (!uid) { toast('Enter UID', 'error'); return; }
+  titleUID_state = uid;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) { toast('Player not found', 'error'); return; }
+    const d = snap.data();
+    document.getElementById('titlesContent').style.display = 'block';
+    document.getElementById('titleTargetInfo').style.display = 'block';
+    document.getElementById('titleTargetInfo').textContent = '✅ ' + (d.displayName || d.name) + ' — Current title: ' + (d.title || 'None');
+    document.getElementById('currentTitle').value = d.title || '';
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.selectTitle = function(t) {
+  document.getElementById('currentTitle').value = t;
+  document.querySelectorAll('.title-chip').forEach(c => c.classList.remove('selected'));
+  event.target.classList.add('selected');
+};
+
+window.saveTitle = async function() {
+  if (!titleUID_state) { toast('Load player first', 'error'); return; }
+  const title = document.getElementById('currentTitle').value.trim();
+  await updateDoc(doc(db, 'users', titleUID_state), { title });
+  toast('Title assigned: ' + title, 'gold');
+  addLog('SET TITLE', titleUID_state, title);
+};
+
+// ─── SKILLS ───
+window.loadSkillTarget = async function() {
+  const uid = document.getElementById('skillUID').value.trim();
+  if (!uid) { toast('Enter UID', 'error'); return; }
+  skillUID_state = uid;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) { toast('Player not found', 'error'); return; }
+    const d = snap.data();
+    const skills = d.skills || [];
+    document.getElementById('skillsContent').style.display = 'block';
+
+    const grid = document.getElementById('skillInputGrid');
+    grid.innerHTML = ALL_SKILLS.map(s => {
+      const found = skills.find(sk => sk.id === s.id);
+      const lvl = found ? found.level : 0;
+      return `<div>
+        <label>${s.icon} ${s.name}</label>
+        <input type="number" id="skill_${s.id}" value="${lvl}" min="0" max="100">
+      </div>`;
+    }).join('');
+    toast('Skills loaded', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.saveSkills = async function() {
+  if (!skillUID_state) { toast('Load player first', 'error'); return; }
+  const skills = ALL_SKILLS.map(s => ({
+    id: s.id, name: s.name, icon: s.icon,
+    level: Number(document.getElementById('skill_' + s.id)?.value || 0)
+  })).filter(s => s.level > 0);
+
+  // Check for custom skills added
+  const snap = await getDoc(doc(db, 'users', skillUID_state));
+  const existing = snap.data().skills || [];
+  const knownIds = ALL_SKILLS.map(s => s.id);
+  const customSkills = existing.filter(s => !knownIds.includes(s.id));
+
+  await updateDoc(doc(db, 'users', skillUID_state), { skills: [...skills, ...customSkills] });
+  toast('Skills saved!', 'success');
+  addLog('SAVE SKILLS', skillUID_state, skills.length + ' skills');
+};
+
+window.maxAllSkills = function() {
+  ALL_SKILLS.forEach(s => {
+    const el = document.getElementById('skill_' + s.id);
+    if (el) el.value = 100;
+  });
+  toast('All skills set to max (100)', 'gold');
+};
+
+window.resetAllSkills = function() {
+  ALL_SKILLS.forEach(s => {
+    const el = document.getElementById('skill_' + s.id);
+    if (el) el.value = 0;
+  });
+  toast('All skills reset to 0', 'warn');
+};
+
+window.addCustomSkill = async function() {
+  if (!skillUID_state) { toast('Load player first', 'error'); return; }
+  const id = document.getElementById('newSkillId').value.trim();
+  const name = document.getElementById('newSkillName').value.trim();
+  const icon = document.getElementById('newSkillIcon').value.trim() || '⚡';
+  const level = Number(document.getElementById('newSkillLevel').value) || 1;
+  if (!id || !name) { toast('ID and Name required', 'error'); return; }
+  const snap = await getDoc(doc(db, 'users', skillUID_state));
+  const skills = snap.data().skills || [];
+  skills.push({ id, name, icon, level });
+  await updateDoc(doc(db, 'users', skillUID_state), { skills });
+  toast('Custom skill added: ' + name, 'success');
+  addLog('ADD SKILL', skillUID_state, name + ' lv' + level);
+};
+
+// ─── QUESTS ───
+window.loadQuestTarget = async function() {
+  const uid = document.getElementById('questUID').value.trim();
+  if (!uid) { toast('Enter UID', 'error'); return; }
+  questUID_state = uid;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) { toast('Player not found', 'error'); return; }
+    const d = snap.data();
+    document.getElementById('questsContent').style.display = 'block';
+    const daily = d.quests?.daily || {};
+    const weekly = d.quests?.weekly || {};
+
+    document.getElementById('dailyQuestOverrides').innerHTML = DAILY_QUEST_IDS.map(id =>
+      `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,245,255,0.06)">
+        <label style="margin:0;flex:1">${id}</label>
+        <select id="dq_${id}" style="width:120px;min-height:32px">
+          <option value="false" ${!daily[id] ? 'selected':''}>Incomplete</option>
+          <option value="true" ${daily[id] ? 'selected':''}>Complete ✅</option>
+        </select>
+      </div>`).join('');
+
+    document.getElementById('weeklyQuestOverrides').innerHTML = WEEKLY_QUEST_IDS.map(id =>
+      `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(0,245,255,0.06)">
+        <label style="margin:0;flex:1">${id}</label>
+        <select id="wq_${id}" style="width:120px;min-height:32px">
+          <option value="false" ${!weekly[id] ? 'selected':''}>Incomplete</option>
+          <option value="true" ${weekly[id] ? 'selected':''}>Complete ✅</option>
+        </select>
+      </div>`).join('');
+
+    toast('Quests loaded', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.saveQuestOverride = async function(type) {
+  if (!questUID_state) { toast('Load player first', 'error'); return; }
+  const ids = type === 'daily' ? DAILY_QUEST_IDS : WEEKLY_QUEST_IDS;
+  const prefix = type === 'daily' ? 'dq_' : 'wq_';
+  const result = {};
+  ids.forEach(id => {
+    const el = document.getElementById(prefix + id);
+    if (el) result[id] = el.value === 'true';
+  });
+  await updateDoc(doc(db, 'users', questUID_state), { [`quests.${type}`]: result });
+  toast(type + ' quests saved!', 'success');
+  addLog('QUEST OVERRIDE', questUID_state, type + ' saved');
+};
+
+window.resetQuests = async function(type) {
+  if (!questUID_state) { toast('Load player first', 'error'); return; }
+  await updateDoc(doc(db, 'users', questUID_state), { [`quests.${type}`]: {} });
+  const ids = type === 'daily' ? DAILY_QUEST_IDS : WEEKLY_QUEST_IDS;
+  const prefix = type === 'daily' ? 'dq_' : 'wq_';
+  ids.forEach(id => { const el = document.getElementById(prefix+id); if(el) el.value='false'; });
+  toast(type + ' quests reset', 'warn');
+  addLog('RESET QUESTS', questUID_state, type);
+};
+
+// ─── ACHIEVEMENTS ───
+window.loadAchTarget = async function() {
+  const uid = document.getElementById('achUID').value.trim();
+  if (!uid) { toast('Enter UID', 'error'); return; }
+  achUID_state = uid;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    if (!snap.exists()) { toast('Player not found', 'error'); return; }
+    const d = snap.data();
+    const achs = d.achievements || [];
+    document.getElementById('achContent').style.display = 'block';
+    document.getElementById('achCheckboxGrid').innerHTML = ALL_ACHIEVEMENTS.map(id => {
+      const unlocked = achs.includes(id);
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;font-family:'Share Tech Mono',monospace;font-size:11px">
+        <input type="checkbox" id="ach_${id}" ${unlocked ? 'checked' : ''} style="width:16px;height:16px;cursor:pointer;accent-color:var(--cyan)">
+        <label for="ach_${id}" style="cursor:pointer;margin:0;font-size:11px;letter-spacing:1px">${id}</label>
+      </div>`;
+    }).join('');
+    toast('Achievements loaded', 'success');
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.saveAchievements = async function() {
+  if (!achUID_state) { toast('Load player first', 'error'); return; }
+  const unlocked = ALL_ACHIEVEMENTS.filter(id => document.getElementById('ach_'+id)?.checked);
+  await updateDoc(doc(db, 'users', achUID_state), { achievements: unlocked });
+  toast('Achievements saved! (' + unlocked.length + ' unlocked)', 'success');
+  addLog('SAVE ACHIEVEMENTS', achUID_state, unlocked.length + ' unlocked');
+};
+
+window.unlockAllAch = function() {
+  ALL_ACHIEVEMENTS.forEach(id => { const el = document.getElementById('ach_'+id); if(el) el.checked=true; });
+  toast('All achievements unlocked', 'gold');
+};
+
+window.lockAllAch = function() {
+  ALL_ACHIEVEMENTS.forEach(id => { const el = document.getElementById('ach_'+id); if(el) el.checked=false; });
+  toast('All achievements locked', 'warn');
+};
+
+// ─── BROADCAST ───
+window.sendBroadcast = async function() {
+  const title = document.getElementById('broadTitle').value.trim();
+  const body = document.getElementById('broadBody').value.trim();
+  const type = document.getElementById('broadType').value;
+  const expiry = Number(document.getElementById('broadExpiry').value) || 24;
+  if (!title || !body) { toast('Title and body required', 'error'); return; }
+  try {
+    await addDoc(collection(db, 'broadcasts'), {
+      title, body, type,
+      createdAt: serverTimestamp(),
+      expiresAt: new Date(Date.now() + expiry * 3600000)
+    });
+    toast('Broadcast sent! 📢', 'success');
+    addLog('BROADCAST', 'ALL', title);
+    document.getElementById('broadTitle').value = '';
+    document.getElementById('broadBody').value = '';
+    loadBroadcasts();
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.loadBroadcasts = async function() {
+  const el = document.getElementById('activeBroadcasts');
+  if (!el) return;
+  try {
+    const snap = await getDocs(collection(db, 'broadcasts'));
+    if (snap.empty) { el.innerHTML = 'No active broadcasts.'; return; }
+    const rows = [];
+    snap.forEach(d => {
+      const data = d.data();
+      rows.push(`<div style="padding:10px;border:1px solid rgba(0,245,255,0.12);margin-bottom:8px">
+        <div style="font-family:'Orbitron',monospace;font-size:12px;margin-bottom:4px">${data.title}</div>
+        <div style="font-size:11px;color:rgba(0,245,255,0.6)">${data.body}</div>
+        <div style="margin-top:6px;display:flex;gap:8px;align-items:center">
+          <span class="badge badge-cyan">${data.type || 'info'}</span>
+          <button class="btn btn-red btn-sm" onclick="deleteBroadcast('${d.id}')">🗑 DELETE</button>
+        </div>
+      </div>`);
+    });
+    el.innerHTML = rows.join('');
+  } catch(e) { el.innerHTML = 'Error: ' + e.message; }
+};
+
+window.deleteBroadcast = async function(id) {
+  await deleteDoc(doc(db, 'broadcasts', id));
+  toast('Broadcast deleted', 'warn');
+  loadBroadcasts();
+};
+
+window.clearBroadcasts = async function() {
+  const snap = await getDocs(collection(db, 'broadcasts'));
+  const batch = writeBatch(db);
+  snap.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+  toast('All broadcasts cleared', 'warn');
+  addLog('CLEAR BROADCASTS', '—', 'All broadcasts deleted');
+  loadBroadcasts();
+};
+
+// ─── BAN / UNBAN ───
+window.loadDangerTarget = async function() {
+  const uid = document.getElementById('dangerUID').value.trim();
+  if (!uid) { toast('Enter UID', 'error'); return; }
+  dangerUID = uid;
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    const infoEl = document.getElementById('dangerTargetInfo');
+    if (!snap.exists()) { infoEl.textContent = '❌ Player not found'; return; }
+    const d = snap.data();
+    infoEl.textContent = '⚡ Loaded: ' + (d.displayName || d.name) + (d.banned ? ' 🚫 [BANNED]' : ' ✅ [ACTIVE]');
+  } catch(e) { toast(e.message, 'error'); }
+};
+
+window.banPlayer = async function() {
+  if (!dangerUID) { toast('Load a player first', 'error'); return; }
+  const reason = document.getElementById('banReason').value.trim();
+  if (!reason) { toast('Provide a ban reason', 'error'); return; }
+  if (!confirm('BAN this player? This will flag them in Firestore.')) return;
+  await updateDoc(doc(db, 'users', dangerUID), { banned: true, banReason: reason, bannedAt: serverTimestamp() });
+  toast('Player BANNED: ' + reason, 'error');
+  addLog('BAN PLAYER', dangerUID, reason);
+  document.getElementById('dangerTargetInfo').textContent = '🚫 Player has been BANNED';
+};
+
+window.unbanPlayer = async function() {
+  if (!dangerUID) { toast('Load a player first', 'error'); return; }
+  await updateDoc(doc(db, 'users', dangerUID), { banned: false, banReason: '', bannedAt: null });
+  toast('Player UNBANNED', 'success');
+  addLog('UNBAN PLAYER', dangerUID, 'Ban lifted');
+};
+
+async function resetPlayerData() {
+  if (!dangerUID) { toast('Load a player first in Danger Zone', 'error'); return; }
+  const freshData = {
+    rank:'E', level:1, xp:0, xpMax:100,
+    hp:100, hpMax:100, mp:50, mpMax:50,
+    gold:0, statPoints:0, title:'Ordinary Human',
+    stats:{ strength:10, agility:10, intelligence:10, vitality:10, perception:10, luck:5 },
+    skills:[], inventory:[], achievements:[],
+    quests:{ daily:{}, weekly:{} },
+    streak:{ login:0, lastLogin:null }
+  };
+  await updateDoc(doc(db, 'users', dangerUID), freshData);
+  toast('Player data RESET to E-rank', 'warn');
+  addLog('RESET DATA', dangerUID, 'Full progress wipe');
+}
+
+window.deletePlayerDoc = async function() {
+  if (!dangerUID) { toast('Load a player first', 'error'); return; }
+  const confirmText = document.getElementById('deleteConfirmInput').value.trim();
+  if (confirmText !== 'DELETE') { toast('Type DELETE to confirm', 'error'); return; }
+  await deleteDoc(doc(db, 'users', dangerUID));
+  toast('Player document DELETED', 'error');
+  addLog('DELETE DOC', dangerUID, 'Firestore doc permanently deleted');
+  document.getElementById('deleteConfirmInput').value = '';
+  document.getElementById('dangerTargetInfo').textContent = 'Document deleted.';
+};
+
+// ─── MAINTENANCE ───
+async function bulkResetQuests(type) {
+  const snap = await getDocs(collection(db, 'users'));
+  const batch = writeBatch(db);
+  snap.forEach(d => batch.update(d.ref, { [`quests.${type}`]: {} }));
+  await batch.commit();
+  toast('All ' + type + ' quests reset!', 'warn');
+  addLog('BULK RESET QUESTS', 'ALL', type);
+}
+
+async function bulkGrant() {
+  const gold = Number(document.getElementById('bulkGold').value) || 0;
+  const xp = Number(document.getElementById('bulkXP').value) || 0;
+  if (!gold && !xp) { toast('Enter gold or XP amount', 'error'); return; }
+  const snap = await getDocs(collection(db, 'users'));
+  const batch = writeBatch(db);
+  snap.forEach(d => {
+    const data = d.data();
+    const updates = {};
+    if (gold) updates.gold = (data.gold || 0) + gold;
+    if (xp) updates.xp = (data.xp || 0) + xp;
+    batch.update(d.ref, updates);
+  });
+  await batch.commit();
+  toast(`Bulk granted +${gold}G +${xp}XP to ALL players!`, 'gold');
+  addLog('BULK GRANT', 'ALL', `+${gold}G +${xp}XP`);
+}
+
+// ─── AUTH CHECK ───
+onAuthStateChanged(auth, user => {
+  if (!user) { window.location.href = 'login.html'; }
+});
+
+// ─── INIT ───
+loadOverview();
+</script>
+</body>
+</html>
